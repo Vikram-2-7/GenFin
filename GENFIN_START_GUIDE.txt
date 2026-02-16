@@ -1,0 +1,56 @@
+🔷 STEP 1 — Start MongoDB (VERY IMPORTANT)
+
+Open PowerShell or CMD and run:
+
+& "D:\MONGO\bin\mongod.exe" --dbpath "D:\data\db"
+
+
+You should see:
+
+Waiting for connections on port 27017
+
+
+DO NOT CLOSE THIS WINDOW.
+
+🔷 STEP 2 — Start Backend
+
+Open new terminal.
+
+Go to backend folder:
+
+cd D:\genfinproj\GenFin v3\project\genfin-backend
+
+
+Run:
+
+npx nodemon server.js
+
+
+You should see:
+
+Server running on port 5000
+MongoDB Connected
+
+🔷 STEP 3 — Start Frontend
+
+Open new terminal.
+
+Go to frontend folder:
+
+cd D:\genfinproj\GenFin v3\project
+
+
+Run:
+
+npm run dev
+
+
+You should see:
+
+Local: http://localhost:5173
+
+🔷 STEP 4 — Open Browser
+
+Go to:
+
+http://localhost:5173

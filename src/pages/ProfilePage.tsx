@@ -2,9 +2,26 @@ import { useState } from 'react';
 import { User, Mail, Phone, Calendar, Shield, Lock, Bell, HelpCircle, CheckCircle, Zap } from 'lucide-react';
 
 function ProfilePage() {
+  const [formData, setFormData] = useState({
+    fullName: '',
+    email: '',
+    phone: '',
+    dateOfBirth: '',
+    age: '',
+    income: '',
+    expenses: '',
+    savings: '',
+    debt: '',
+    emergencyFundMonths: '',
+    riskTolerance: '',
+    goal: '',
+    timeHorizon: ''
+  });
+
+  const [result, setResult] = useState(null);
   const [showAlert, setShowAlert] = useState(false);
-  const [mindsetSelected, setMindsetSelected] = useState<string | null>(null);
-  const [financialStatus, setFinancialStatus] = useState<string | null>(null);
+  const [mindsetSelected, setMindsetSelected] = useState(null);
+  const [financialStatus, setFinancialStatus] = useState(null);
 
   const handleSaveProfile = () => {
     setShowAlert(true);
@@ -59,6 +76,67 @@ function ProfilePage() {
     },
   ];
 
+  const handleAssessment = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/api/profile", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          ...formData,
+          age: Number(formData.age),
+          income: Number(formData.income),
+          expenses: Number(formData.expenses),
+          savings: Number(formData.savings),
+          debt: Number(formData.debt),
+          emergencyFundMonths: Number(formData.emergencyFundMonths)
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.error);
+        setResult(null);
+        return;
+      }
+
+      setResult(data);
+    } catch (error) {
+      alert("Server not reachable. Please try again.");
+      console.error("Frontend error:", error);
+    }
+  };
+
+  const handlePersonalSave = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/api/profile/personal", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          fullName: formData.fullName,
+          email: formData.email,
+          phone: formData.phone,
+          dateOfBirth: formData.dateOfBirth
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.error);
+        return;
+      }
+
+      alert("Personal details saved successfully!");
+    } catch (error) {
+      alert("Server error.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
       <div className="max-w-5xl mx-auto px-4 py-12">
@@ -79,6 +157,7 @@ function ProfilePage() {
         )}
 
         <div className="grid gap-8">
+          {/* Personal Information Section */}
           <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-8">
             <div className="flex items-start mb-6">
               <div className="w-12 h-12 bg-gradient-to-br from-blue-500/20 to-blue-600/20 rounded-lg flex items-center justify-center mr-4">
@@ -99,6 +178,8 @@ function ProfilePage() {
                     <input
                       type="text"
                       placeholder="Enter your full name"
+                      value={formData.fullName}
+                      onChange={(e) => setFormData({...formData, fullName: e.target.value})}
                       className="w-full pl-10 pr-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all"
                     />
                   </div>
@@ -111,6 +192,8 @@ function ProfilePage() {
                     <input
                       type="email"
                       placeholder="your.email@example.com"
+                      value={formData.email}
+                      onChange={(e) => setFormData({...formData, email: e.target.value})}
                       className="w-full pl-10 pr-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all"
                     />
                   </div>
@@ -123,6 +206,8 @@ function ProfilePage() {
                     <input
                       type="tel"
                       placeholder="+91 98765 43210"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({...formData, phone: e.target.value})}
                       className="w-full pl-10 pr-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all"
                     />
                   </div>
@@ -134,6 +219,8 @@ function ProfilePage() {
                     <Calendar className="absolute left-3 top-3.5 text-slate-500" size={18} />
                     <input
                       type="date"
+                      value={formData.dateOfBirth}
+                      onChange={(e) => setFormData({...formData, dateOfBirth: e.target.value})}
                       className="w-full pl-10 pr-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-slate-100 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all"
                     />
                   </div>
@@ -141,7 +228,7 @@ function ProfilePage() {
               </div>
 
               <button
-                onClick={handleSaveProfile}
+                onClick={handlePersonalSave}
                 className="mt-4 px-6 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all font-semibold shadow-lg hover:shadow-blue-500/30"
               >
                 Save Personal Details
@@ -149,6 +236,7 @@ function ProfilePage() {
             </div>
           </div>
 
+          {/* Investment Mindset Section */}
           <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-8">
             <div className="flex items-start mb-8">
               <div className="w-12 h-12 bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 rounded-lg flex items-center justify-center mr-4">
@@ -184,6 +272,7 @@ function ProfilePage() {
             </div>
           </div>
 
+          {/* Financial Status Section */}
           <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-8">
             <div className="flex items-start mb-8">
               <div className="w-12 h-12 bg-gradient-to-br from-amber-500/20 to-amber-600/20 rounded-lg flex items-center justify-center mr-4">
@@ -195,7 +284,73 @@ function ProfilePage() {
               </div>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-4">
+            {/* Financial Assessment */}
+            <div className="mb-8">
+              <h3 className="text-2xl font-bold text-slate-100 mb-4">Financial Assessment</h3>
+              <div className="grid md:grid-cols-2 gap-4 mb-6">
+                <input
+                  type="number"
+                  placeholder="Age"
+                  value={formData.age}
+                  onChange={(e) => setFormData({...formData, age: e.target.value})}
+                  className="p-3 bg-slate-700 border border-slate-600 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20"
+                />
+                <input
+                  type="number"
+                  placeholder="Monthly Income"
+                  value={formData.income}
+                  onChange={(e) => setFormData({...formData, income: e.target.value})}
+                  className="p-3 bg-slate-700 border border-slate-600 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20"
+                />
+                <input
+                  type="number"
+                  placeholder="Monthly Expenses"
+                  value={formData.expenses}
+                  onChange={(e) => setFormData({...formData, expenses: e.target.value})}
+                  className="p-3 bg-slate-700 border border-slate-600 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20"
+                />
+                <input
+                  type="number"
+                  placeholder="Monthly Savings"
+                  value={formData.savings}
+                  onChange={(e) => setFormData({...formData, savings: e.target.value})}
+                  className="p-3 bg-slate-700 border border-slate-600 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20"
+                />
+                <input
+                  type="number"
+                  placeholder="Total Debt"
+                  value={formData.debt}
+                  onChange={(e) => setFormData({...formData, debt: e.target.value})}
+                  className="p-3 bg-slate-700 border border-slate-600 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20"
+                />
+                <input
+                  type="number"
+                  placeholder="Emergency Fund (Months)"
+                  value={formData.emergencyFundMonths}
+                  onChange={(e) => setFormData({...formData, emergencyFundMonths: e.target.value})}
+                  className="p-3 bg-slate-700 border border-slate-600 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20"
+                />
+              </div>
+              <button
+                onClick={handleAssessment}
+                className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all font-semibold shadow-lg hover:shadow-blue-500/30"
+              >
+                Analyze Financial Health
+              </button>
+              {result && (
+                <div className="mt-6 p-6 bg-gradient-to-r from-blue-500/20 to-blue-600/20 border border-blue-500/50 rounded-lg">
+                  <h3 className="text-xl font-bold text-slate-100 mb-4">Your Financial Scores</h3>
+                  <div className="space-y-2 text-slate-200">
+                    <p>Risk Score: {result.riskScore || 'N/A'}</p>
+                    <p>Stability Score: {result.stabilityScore || 'N/A'}</p>
+                    <p>Investment Readiness: {result.readinessScore || 'N/A'}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Status Cards */}
+            <div className="grid md:grid-cols-3 gap-4 mb-6">
               {statuses.map((status) => (
                 <button
                   key={status.id}
@@ -217,21 +372,22 @@ function ProfilePage() {
             </div>
 
             {financialStatus === 'deficit' && (
-              <div className="mt-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+              <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
                 <p className="text-amber-300 text-sm">
-                  💡 <strong>Pro Tip:</strong> Focus on budgeting and expense management first. Once you have regular surplus, explore investment options. No pressure—we're here to support your journey.
+                  💡 <strong>Pro Tip:</strong> Focus on budgeting and expense management first. Once you have regular surplus, explore investment options. No pressure—we&apos;re here to support your journey.
                 </p>
               </div>
             )}
 
             <button
               onClick={handleSaveProfile}
-              className="mt-6 px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-lg hover:from-emerald-600 hover:to-emerald-700 transition-all font-semibold shadow-lg hover:shadow-emerald-500/30"
+              className="px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-lg hover:from-emerald-600 hover:to-emerald-700 transition-all font-semibold shadow-lg hover:shadow-emerald-500/30"
             >
               Save Financial Profile
             </button>
           </div>
 
+          {/* Security & Privacy Section */}
           <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-8">
             <div className="flex items-start mb-6">
               <div className="w-12 h-12 bg-gradient-to-br from-red-500/20 to-red-600/20 rounded-lg flex items-center justify-center mr-4">
@@ -244,23 +400,20 @@ function ProfilePage() {
             </div>
 
             <div className="space-y-3">
-              <button className="w-full text-left p-4 border border-slate-600 rounded-lg hover:bg-slate-700/50 transition-colors">
-                <h3 className="font-semibold text-slate-100 mb-1">Change Password</h3>
-                <p className="text-sm text-slate-400">Update your account password</p>
-              </button>
-
-              <button className="w-full text-left p-4 border border-slate-600 rounded-lg hover:bg-slate-700/50 transition-colors">
-                <h3 className="font-semibold text-slate-100 mb-1">Two-Factor Authentication</h3>
-                <p className="text-sm text-slate-400">Add an extra layer of security</p>
-              </button>
-
-              <button className="w-full text-left p-4 border border-slate-600 rounded-lg hover:bg-slate-700/50 transition-colors">
-                <h3 className="font-semibold text-slate-100 mb-1">Data Privacy</h3>
-                <p className="text-sm text-slate-400">Control your data and privacy settings</p>
-              </button>
+              {[
+                { title: 'Change Password', desc: 'Update your account password' },
+                { title: 'Two-Factor Authentication', desc: 'Add an extra layer of security' },
+                { title: 'Data Privacy', desc: 'Control your data and privacy settings' },
+              ].map((item, idx) => (
+                <button key={idx} className="w-full text-left p-4 border border-slate-600 rounded-lg hover:bg-slate-700/50 transition-colors">
+                  <h3 className="font-semibold text-slate-100 mb-1">{item.title}</h3>
+                  <p className="text-sm text-slate-400">{item.desc}</p>
+                </button>
+              ))}
             </div>
           </div>
 
+          {/* Notifications Section */}
           <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-8">
             <div className="flex items-start mb-6">
               <div className="w-12 h-12 bg-gradient-to-br from-purple-500/20 to-purple-600/20 rounded-lg flex items-center justify-center mr-4">
@@ -275,9 +428,7 @@ function ProfilePage() {
             <div className="space-y-3">
               {['Investment Updates', 'Educational Content', 'Market Alerts'].map((notif, idx) => (
                 <div key={idx} className="flex items-center justify-between p-3 border border-slate-600 rounded-lg hover:bg-slate-700/30 transition-colors">
-                  <div>
-                    <p className="font-semibold text-slate-100">{notif}</p>
-                  </div>
+                  <p className="font-semibold text-slate-100">{notif}</p>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" className="sr-only peer" defaultChecked={idx < 2} />
                     <div className="w-11 h-6 bg-slate-600 peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
@@ -287,6 +438,7 @@ function ProfilePage() {
             </div>
           </div>
 
+          {/* Support Section */}
           <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-8">
             <div className="flex items-start mb-6">
               <div className="w-12 h-12 bg-gradient-to-br from-orange-500/20 to-orange-600/20 rounded-lg flex items-center justify-center mr-4">
