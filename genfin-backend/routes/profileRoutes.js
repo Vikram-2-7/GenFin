@@ -2,14 +2,69 @@ const express = require("express");
 const router = express.Router();
 const UserProfile = require("../models/UserProfile");
 const calculateScores = require("../services/scoringService");
-// Save personal info only
-router.post("/personal", async (req, res) => {
+
+// Save comprehensive profile - personal + financial + mindset + status + feedbacks
+router.post("/save-profile", async (req, res) => {
   try {
+    console.log("Incoming profile data:", req.body);
+
     const newProfile = new UserProfile({
+      // Personal Info
       fullName: req.body.fullName,
       email: req.body.email,
       phone: req.body.phone,
-      dateOfBirth: req.body.dateOfBirth
+      dateOfBirth: req.body.dateOfBirth,
+
+      // Financial Info
+      age: req.body.age,
+      income: req.body.income,
+      expenses: req.body.expenses,
+      savings: req.body.savings,
+      debt: req.body.debt,
+      emergencyFundMonths: req.body.emergencyFundMonths,
+
+      // Investment Mindset
+      investmentMindset: req.body.investmentMindset,
+
+      // Financial Status Selection
+      financialStatus: req.body.financialStatus,
+
+      // Scores and Analysis
+      riskScore: req.body.riskScore,
+      stabilityScore: req.body.stabilityScore,
+      readinessScore: req.body.readinessScore,
+      expenseRatio: req.body.expenseRatio,
+      savingsRate: req.body.savingsRate,
+      debtRatio: req.body.debtRatio,
+      status: req.body.status,
+      recommendation: req.body.recommendation,
+      stateCategory: req.body.stateCategory,
+
+      // Feedbacks
+      feedbacks: req.body.feedbacks || []
+    });
+
+    const saved = await newProfile.save();
+    console.log("Profile saved to DB:", saved);
+
+    return res.status(200).json(saved);
+
+  } catch (err) {
+    console.error("Save profile error:", err);
+    // include original message in response for debugging
+    return res.status(500).json({ error: "Failed to save profile", details: err.message || err.toString() });
+  }
+});
+
+// Save parental/guardian info for minors
+router.post("/guardian", async (req, res) => {
+  try {
+    const newProfile = new UserProfile({
+      guardianName: req.body.guardianName,
+      guardianRelation: req.body.guardianRelation,
+      guardianPhone: req.body.guardianPhone,
+      guardianEmail: req.body.guardianEmail,
+      isMinorProfile: true
     });
 
     const saved = await newProfile.save();
@@ -17,8 +72,8 @@ router.post("/personal", async (req, res) => {
     return res.status(200).json(saved);
 
   } catch (err) {
-    console.error("Personal info error:", err.message);
-    return res.status(500).json({ error: "Failed to save personal info" });
+    console.error("Guardian info error:", err.message);
+    return res.status(500).json({ error: "Failed to save guardian info" });
   }
 });
 
