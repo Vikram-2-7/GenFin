@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Award, ChevronDown, ChevronUp, Shield, Clock } from 'lucide-react';
+import { Award, ChevronDown, ChevronUp, Shield, Clock, TrendingUp, Zap, AlertCircle } from 'lucide-react';
 
 interface Scheme {
   id: string;
@@ -155,20 +155,22 @@ function SchemesPage({ onSchemeDetail }: SchemesPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
+      <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Government Savings Schemes</h1>
-          <p className="text-lg text-gray-600">
+          <h1 className="text-4xl font-bold text-slate-100 mb-2">Government Savings Schemes</h1>
+          <p className="text-lg text-slate-400">
             Explore safe, government-backed schemes with guaranteed returns and tax benefits.
           </p>
         </div>
 
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-8">
+        <div className="bg-gradient-to-r from-emerald-900/30 to-slate-800 border border-emerald-800/50 rounded-xl p-6 mb-8 backdrop-blur-sm">
           <div className="flex items-start">
-            <Shield className="text-green-600 mt-1 flex-shrink-0" size={20} />
-            <p className="ml-3 text-sm text-gray-700">
-              <strong>100% Safe:</strong> All schemes listed here are backed by the Government of India with guaranteed returns. These are ideal for risk-averse investors and long-term financial planning.
+            <div className="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Shield className="text-emerald-400" size={20} />
+            </div>
+            <p className="ml-4 text-sm text-emerald-200">
+              <strong>100% Government-Backed:</strong> All schemes are backed by the Government of India with guaranteed returns. Ideal for conservative investors seeking long-term security with tax benefits.
             </p>
           </div>
         </div>
@@ -177,113 +179,125 @@ function SchemesPage({ onSchemeDetail }: SchemesPageProps) {
           {schemes.map((scheme) => (
             <div
               key={scheme.id}
-              className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
+              className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl overflow-hidden hover:shadow-2xl hover:shadow-emerald-500/10 transition-all duration-300 cursor-pointer"
             >
               <div
-                className="p-6 cursor-pointer"
+                className="p-6"
                 onClick={() => toggleExpand(scheme.id)}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <Award className="text-green-600" size={24} />
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-12 h-12 bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 rounded-lg flex items-center justify-center">
+                        <Award className="text-emerald-400" size={24} />
+                      </div>
                       <div>
-                        <h3 className="text-xl font-semibold text-gray-900">{scheme.name}</h3>
-                        <span className="text-sm text-gray-500">({scheme.shortName})</span>
+                        <h3 className="text-xl font-bold text-slate-100">{scheme.name}</h3>
+                        <span className="text-sm text-slate-400">({scheme.shortName})</span>
                       </div>
                     </div>
-                    <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium mb-3">
+                    <span className="inline-block px-3 py-1 bg-slate-700/50 text-slate-300 rounded-md text-xs font-semibold mb-3 border border-slate-600">
                       {scheme.type}
                     </span>
-                    <p className="text-gray-600 mb-3">{scheme.description}</p>
-                    <div className="flex items-center gap-6 text-sm">
+                    <p className="text-slate-300 mb-4 text-sm leading-relaxed">{scheme.description}</p>
+                    <div className="flex items-center gap-8 text-sm flex-wrap">
                       <div className="flex items-center">
-                        <div className="w-2 h-2 bg-green-600 rounded-full mr-2"></div>
-                        <span className="text-gray-700">Interest: <strong>{scheme.interest}</strong></span>
+                        <TrendingUp size={16} className="text-emerald-400 mr-2" />
+                        <span className="text-slate-400">Interest: <span className="text-emerald-300 font-bold">{scheme.interest}</span></span>
                       </div>
                       <div className="flex items-center">
-                        <Clock size={16} className="text-gray-600 mr-1" />
-                        <span className="text-gray-700">Tenure: <strong>{scheme.tenure}</strong></span>
+                        <Clock size={16} className="text-blue-400 mr-2" />
+                        <span className="text-slate-400">Tenure: <span className="text-blue-300 font-bold">{scheme.tenure}</span></span>
                       </div>
                     </div>
                   </div>
-                  <button className="ml-4 p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                  <button className="ml-4 p-2 hover:bg-slate-700 rounded-lg transition-colors">
                     {expandedId === scheme.id ? (
-                      <ChevronUp size={20} className="text-gray-600" />
+                      <ChevronUp size={20} className="text-emerald-400" />
                     ) : (
-                      <ChevronDown size={20} className="text-gray-600" />
+                      <ChevronDown size={20} className="text-slate-500" />
                     )}
                   </button>
                 </div>
               </div>
 
               {expandedId === scheme.id && (
-                <div className="px-6 pb-6 border-t border-gray-100 pt-4">
-                  <div className="grid md:grid-cols-2 gap-6">
+                <div className="px-6 pb-6 border-t border-slate-700 pt-4 bg-slate-900/50">
+                  <div className="grid md:grid-cols-2 gap-6 mb-6">
                     <div>
-                      <h4 className="font-semibold text-gray-900 mb-3">Eligibility:</h4>
-                      <ul className="space-y-2">
+                      <h4 className="font-bold text-slate-100 mb-3 flex items-center">
+                        <Shield size={18} className="text-emerald-400 mr-2" />
+                        Eligibility
+                      </h4>
+                      <ul className="space-y-2.5">
                         {scheme.eligibility.map((item, index) => (
                           <li key={index} className="flex items-start">
-                            <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                            <span className="text-gray-700">{item}</span>
+                            <div className="w-2 h-2 bg-emerald-400 rounded-full mt-1.5 mr-3 flex-shrink-0"></div>
+                            <span className="text-slate-300 text-sm">{item}</span>
                           </li>
                         ))}
                       </ul>
                     </div>
 
                     <div>
-                      <h4 className="font-semibold text-gray-900 mb-3">Key Benefits:</h4>
-                      <ul className="space-y-2">
+                      <h4 className="font-bold text-slate-100 mb-3 flex items-center">
+                        <Zap size={18} className="text-amber-400 mr-2" />
+                        Key Benefits
+                      </h4>
+                      <ul className="space-y-2.5">
                         {scheme.benefits.map((benefit, index) => (
                           <li key={index} className="flex items-start">
-                            <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                            <span className="text-gray-700">{benefit}</span>
+                            <div className="w-2 h-2 bg-emerald-400 rounded-full mt-1.5 mr-3 flex-shrink-0"></div>
+                            <span className="text-slate-300 text-sm">{benefit}</span>
                           </li>
                         ))}
                       </ul>
                     </div>
                   </div>
 
-                  <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <h4 className="font-semibold text-gray-900 mb-2">Tax Benefits:</h4>
-                    <p className="text-gray-700">{scheme.taxBenefits}</p>
+                  <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg mb-4">
+                    <h4 className="font-bold text-amber-300 mb-2 flex items-center">
+                      <AlertCircle size={16} className="mr-2" />
+                      Tax Benefits
+                    </h4>
+                    <p className="text-slate-300 text-sm">{scheme.taxBenefits}</p>
                   </div>
 
-                  <div className="mt-4 pt-4 border-t border-gray-100">
-                    <button
-                      onClick={() => onSchemeDetail(scheme.id)}
-                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                    >
-                      Get Detailed Information
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => onSchemeDetail(scheme.id)}
+                    className="px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-lg hover:from-emerald-600 hover:to-emerald-700 transition-all font-semibold shadow-lg hover:shadow-emerald-500/30"
+                  >
+                    Get Detailed Information
+                  </button>
                 </div>
               )}
             </div>
           ))}
         </div>
 
-        <div className="mt-8 bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">How to Invest in Government Schemes</h3>
-          <div className="space-y-3 text-gray-700">
-            <p>Government schemes can be accessed through:</p>
-            <ul className="space-y-2 ml-4">
+        <div className="mt-12 bg-gradient-to-br from-emerald-900/20 via-slate-800 to-slate-900 border border-emerald-800/50 rounded-xl p-8 backdrop-blur-sm">
+          <h3 className="text-lg font-bold text-slate-100 mb-4 flex items-center">
+            <AlertCircle className="text-emerald-400 mr-2" size={24} />
+            How to Invest in Government Schemes
+          </h3>
+          <div className="space-y-4 text-slate-300">
+            <p className="text-slate-400">Government schemes can be accessed through multiple channels:</p>
+            <ul className="space-y-3 ml-4">
               <li className="flex items-start">
-                <span className="text-green-600 mr-2">✓</span>
-                <span><strong>Post Offices:</strong> Most schemes available at your nearest post office</span>
+                <span className="text-emerald-400 mr-3 font-bold">✓</span>
+                <span><strong className="text-slate-100">Post Offices:</strong> Most schemes available at your nearest post office nationwide</span>
               </li>
               <li className="flex items-start">
-                <span className="text-green-600 mr-2">✓</span>
-                <span><strong>Authorized Banks:</strong> Public and private sector banks offer several schemes</span>
+                <span className="text-emerald-400 mr-3 font-bold">✓</span>
+                <span><strong className="text-slate-100">Authorized Banks:</strong> Public and private sector banks offer several schemes with easy setup</span>
               </li>
               <li className="flex items-start">
-                <span className="text-green-600 mr-2">✓</span>
-                <span><strong>Online Platforms:</strong> Some schemes can be accessed through net banking</span>
+                <span className="text-emerald-400 mr-3 font-bold">✓</span>
+                <span><strong className="text-slate-100">Online Platforms:</strong> Some schemes can be accessed through net banking and digital portals</span>
               </li>
               <li className="flex items-start">
-                <span className="text-green-600 mr-2">✓</span>
-                <span><strong>Required Documents:</strong> Typically need Aadhaar, PAN, address proof, and photos</span>
+                <span className="text-emerald-400 mr-3 font-bold">✓</span>
+                <span><strong className="text-slate-100">Required Documents:</strong> Typically need Aadhaar, PAN, address proof, and passport photos</span>
               </li>
             </ul>
           </div>
