@@ -1,6 +1,6 @@
-import { Home, TrendingUp, Award, BookOpen, User } from 'lucide-react';
+import { Home, TrendingUp, Award, BookOpen, User, Zap, Target, Settings, Activity } from 'lucide-react';
 
-type Page = 'home' | 'investments' | 'schemes' | 'education' | 'profile';
+type Page = 'home' | 'investments' | 'schemes' | 'education' | 'profile' | 'scheme-detail' | 'budget-analysis' | 'slm-analysis' | 'goals' | 'tech-setup' | 'performance-test';
 
 interface NavigationProps {
   currentPage: Page;
@@ -14,6 +14,11 @@ function Navigation({ currentPage, onNavigate }: NavigationProps) {
     { id: 'schemes' as Page, label: 'Schemes', icon: Award },
     { id: 'education' as Page, label: 'Learn', icon: BookOpen },
     { id: 'profile' as Page, label: 'Profile', icon: User },
+    { id: 'budget-analysis' as Page, label: 'Budget Analysis', icon: Activity },
+    { id: 'slm-analysis' as Page, label: 'SLM Analysis', icon: Zap },
+    { id: 'goals' as Page, label: 'Financial Goals', icon: Target },
+    { id: 'tech-setup' as Page, label: 'System Setup', icon: Settings },
+    { id: 'performance-test' as Page, label: 'Performance Test', icon: Activity },
   ];
 
   return (

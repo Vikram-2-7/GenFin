@@ -638,7 +638,7 @@ function ProfilePage() {
 
           {/* Financial Status Section */}
           <div className={`bg-gradient-to-br rounded-xl p-8 border transition-all duration-700 ease-in-out 
-              ${showParentMode ? 'from-pink-500 to-purple-500 border-pink-400 scale-105' : 'from-slate-800 to-slate-900 border-slate-700'}`}
+              ${showParentMode ? 'from-white-500 to-purple-500 border-pink-400 scale-105' : 'from-slate-800 to-slate-900 border-slate-700'}`}
           >
             <div className="flex items-start mb-8">
               <div className="w-12 h-12 bg-gradient-to-br from-amber-500/20 to-amber-600/20 rounded-lg flex items-center justify-center mr-4">

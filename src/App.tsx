@@ -6,8 +6,13 @@ import EducationPage from './pages/EducationPage';
 import ProfilePage from './pages/ProfilePage';
 import SchemeDetailPage from './pages/SchemeDetailPage';
 import Navigation from './components/Navigation';
+import BudgetOptimizationTool from './components/BudgetOptimizationTool';
+import SLMAnalysisPage from './components/SLMAnalysisPage';
+import FinancialGoalsDashboard from './components/FinancialGoalsDashboard';
+import OllamaSetupValidator from './components/OllamaSetupValidator';
+import SLMPerformanceBenchmark from './components/SLMPerformanceBenchmark';
 
-type Page = 'home' | 'investments' | 'schemes' | 'education' | 'profile' | 'scheme-detail';
+type Page = 'home' | 'investments' | 'schemes' | 'education' | 'profile' | 'scheme-detail' | 'budget-analysis' | 'slm-analysis' | 'goals' | 'tech-setup' | 'performance-test';
 
 interface AppState {
   page: Page;
@@ -40,6 +45,16 @@ function App() {
             onBack={() => navigate('schemes')}
           />
         );
+      case 'budget-analysis':
+        return <BudgetOptimizationTool />;
+      case 'slm-analysis':
+        return <SLMAnalysisPage />;
+      case 'goals':
+        return <FinancialGoalsDashboard />;
+      case 'tech-setup':
+        return <OllamaSetupValidator />;
+      case 'performance-test':
+        return <SLMPerformanceBenchmark />;
       default:
         return <HomePage onNavigate={(p) => navigate(p)} />;
     }
