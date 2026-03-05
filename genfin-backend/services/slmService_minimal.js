@@ -6,31 +6,6 @@ const financialKnowledgeBase = require('./financialKnowledgeBase');
 
 class SLMService {
   /**
-   * Comprehensive financial analysis using rules only (no LLM calls for features)
-   */
-  static async analyzeFinancialProfile(profileData) {
-    try {
-      console.log('📊 DEBUG: analyzeFinancialProfile called');
-      
-      // Use the same logic as getComprehensiveFinancialSummary but for single analysis
-      const analysis = this.performRuleBasedAnalysis(profileData);
-      
-      return {
-        hasProfile: true,
-        profile: profileData,
-        currentAnalysis: analysis,
-        explanation: this.generateBasicExplanation(analysis),
-        investmentAdvice: this.generateRuleBasedInvestmentAdvice(analysis),
-        lastUpdated: new Date().toISOString(),
-        profileCompleteness: this.calculateProfileCompleteness(profileData)
-      };
-    } catch (error) {
-      console.error('Profile Analysis Error:', error);
-      throw new Error(`Failed to analyze financial profile: ${error.message}`);
-    }
-  }
-
-  /**
    * Get comprehensive financial health summary with statistics and guided path
    */
   static async getComprehensiveFinancialSummary(profileData) {
@@ -91,60 +66,6 @@ class SLMService {
       console.error('Comprehensive Summary Error:', error);
       throw new Error(`Failed to generate comprehensive summary: ${error.message}`);
     }
-  }
-
-  static generateBasicExplanation(analysis) {
-    const riskLevel = analysis.riskTolerance;
-    const savingsRate = analysis.savingsRate;
-    const debtRatio = analysis.debtRatio;
-    
-    let explanation = `Based on your financial profile, you have a ${riskLevel} risk tolerance with a savings rate of ${savingsRate}%.`;
-    
-    if (debtRatio > 0.3) {
-      explanation += ` Your debt-to-income ratio of ${debtRatio}% is high and should be prioritized.`;
-    }
-    
-    if (analysis.canInvest) {
-      explanation += ` You're in a good position to start investing.`;
-    } else {
-      explanation += ` Consider building an emergency fund before investing.`;
-    }
-    
-    return explanation;
-  }
-
-  static generateRuleBasedInvestmentAdvice(analysis) {
-    const riskLevel = analysis.riskTolerance;
-    
-    const advice = {
-      recommendedProducts: [],
-      strategy: '',
-      riskWarning: ''
-    };
-
-    switch (riskLevel) {
-      case 'conservative':
-        advice.recommendedProducts = ['PPF', 'Fixed Deposits', 'Debt Mutual Funds', 'Government Bonds'];
-        advice.strategy = 'Focus on capital preservation with 6-8% returns';
-        advice.riskWarning = 'Low risk, lower returns but stable';
-        break;
-      case 'moderate':
-        advice.recommendedProducts = ['Hybrid Mutual Funds', 'Balanced Funds', 'Index Funds'];
-        advice.strategy = 'Balance growth and stability with 8-12% returns';
-        advice.riskWarning = 'Medium risk, moderate returns';
-        break;
-      case 'aggressive':
-        advice.recommendedProducts = ['Equity Mutual Funds', 'Growth Stocks', 'Sectoral Funds'];
-        advice.strategy = 'Focus on high growth with 12-15% returns';
-        advice.riskWarning = 'High risk, higher returns but volatile';
-        break;
-      default:
-        advice.recommendedProducts = ['Index Funds', 'Balanced Funds'];
-        advice.strategy = 'Balanced approach for long-term growth';
-        advice.riskWarning = 'Medium risk, moderate returns';
-    }
-
-    return advice;
   }
 
   static performRuleBasedAnalysis(profileData) {

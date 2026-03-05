@@ -1,8 +1,14 @@
 /**
- * Minimal SLM Service - Fixed version for broken features
+ * Specialized Language Model (SLM) Service - Fixed Version
+ * 
+ * Hybrid system combining:
+ * - Rule-based financial scoring (deterministic)
+ * - Financial knowledge base (domain expertise)
+ * - Simplified LLM calls (only for chat)
  */
 
 const financialKnowledgeBase = require('./financialKnowledgeBase');
+const OllamaService = require('./ollamaService');
 
 class SLMService {
   /**
@@ -10,17 +16,21 @@ class SLMService {
    */
   static async analyzeFinancialProfile(profileData) {
     try {
-      console.log('📊 DEBUG: analyzeFinancialProfile called');
+      // Rule-based analysis only
+      const ruleBasedAnalysis = this.performRuleBasedAnalysis(profileData);
       
-      // Use the same logic as getComprehensiveFinancialSummary but for single analysis
-      const analysis = this.performRuleBasedAnalysis(profileData);
+      // Simple explanation without LLM call
+      const explanation = this.generateBasicExplanation(ruleBasedAnalysis);
       
+      // Generate investment recommendation using rules
+      const investmentAdvice = this.generateRuleBasedInvestmentAdvice(ruleBasedAnalysis);
+
       return {
         hasProfile: true,
         profile: profileData,
-        currentAnalysis: analysis,
-        explanation: this.generateBasicExplanation(analysis),
-        investmentAdvice: this.generateRuleBasedInvestmentAdvice(analysis),
+        currentAnalysis: ruleBasedAnalysis,
+        explanation: explanation,
+        investmentAdvice: investmentAdvice,
         lastUpdated: new Date().toISOString(),
         profileCompleteness: this.calculateProfileCompleteness(profileData)
       };
@@ -47,7 +57,7 @@ class SLMService {
       const guidedPath = this.generateGuidedPath(analysis, profileData);
       
       // Risk assessment
-      const riskAssessment = this.assessRisk(analysis, profileData);
+      const riskAssessment = this.assessRisk(analysis);
       
       // Key insights
       const insights = this.extractKeyInsights(analysis);
@@ -93,6 +103,9 @@ class SLMService {
     }
   }
 
+  /**
+   * Generate basic explanation without LLM
+   */
   static generateBasicExplanation(analysis) {
     const riskLevel = analysis.riskTolerance;
     const savingsRate = analysis.savingsRate;
@@ -113,6 +126,9 @@ class SLMService {
     return explanation;
   }
 
+  /**
+   * Generate rule-based investment advice
+   */
   static generateRuleBasedInvestmentAdvice(analysis) {
     const riskLevel = analysis.riskTolerance;
     
@@ -147,7 +163,27 @@ class SLMService {
     return advice;
   }
 
+  /**
+   * Generate rule-based investment readiness
+   */
+  static generateRuleBasedInvestmentReadiness(analysis) {
+    const readinessScore = analysis.readinessScore;
+    
+    const readinessLevel = readinessScore >= 80 ? 'Ready' :
+                        readinessScore >= 60 ? 'Almost Ready' :
+                        readinessScore >= 40 ? 'Getting Started' : 'Not Ready';
+
+    return {
+      isReady: analysis.canInvest,
+      readinessScore: readinessScore,
+      readinessLevel: readinessLevel,
+      recommendation: this.generateRuleBasedInvestmentAdvice(analysis)
+    };
+  }
+
+  // Keep all existing helper methods from original file
   static performRuleBasedAnalysis(profileData) {
+    // Implementation from original file...
     const income = profileData.income || 0;
     const expenses = profileData.expenses || 0;
     const savings = profileData.savings || 0;
@@ -184,6 +220,7 @@ class SLMService {
   }
 
   static generateFinancialStatistics(profileData, analysis) {
+    // Implementation from original file...
     return {
       cashFlow: {
         monthlyIncome: profileData.income || 0,
@@ -205,6 +242,7 @@ class SLMService {
   }
 
   static generateGuidedPath(analysis, profileData) {
+    // Implementation from original file...
     return {
       currentStage: analysis.canInvest ? 'Ready to Invest' : 'Building Foundation',
       nextSteps: analysis.canInvest ? 
@@ -217,32 +255,31 @@ class SLMService {
     };
   }
 
-  static assessRisk(analysis, profileData) {
-    const debtRatio = analysis.debtRatio;
-    const emergencyFundMonths = profileData.emergencyFundMonths || 0;
-    
+  static assessRisk(analysis) {
+    // Implementation from original file...
     return {
-      overallRisk: debtRatio > 40 ? 'High' : 
-                 debtRatio > 20 ? 'Medium' : 'Low',
+      overallRisk: analysis.debtRatio > 40 ? 'High' : 
+                 analysis.debtRatio > 20 ? 'Medium' : 'Low',
       riskFactors: [
         {
           factor: 'Debt-to-Income Ratio',
-          level: debtRatio > 40 ? 'High' : debtRatio > 20 ? 'Medium' : 'Low',
+          level: analysis.debtRatio > 40 ? 'High' : analysis.debtRatio > 20 ? 'Medium' : 'Low',
           impact: 'Affects borrowing capacity and investment ability'
         },
         {
           factor: 'Emergency Fund',
-          level: emergencyFundMonths >= 6 ? 'Adequate' : 'Inadequate',
+          level: (profileData.emergencyFundMonths || 0) >= 6 ? 'Adequate' : 'Inadequate',
           impact: 'Financial security during emergencies'
         }
       ],
-      recommendations: debtRatio > 30 ? 
+      recommendations: analysis.debtRatio > 30 ? 
         ['Prioritize debt repayment', 'Avoid new loans', 'Consider debt consolidation'] :
         ['Build emergency fund', 'Increase savings rate', 'Start conservative investing']
     };
   }
 
   static extractKeyInsights(analysis) {
+    // Implementation from original file...
     const insights = [];
     
     if (analysis.savingsRate < 10) {
@@ -270,6 +307,7 @@ class SLMService {
   }
 
   static generateActionPlan(analysis) {
+    // Implementation from original file...
     return {
       immediate: analysis.debtRatio > 30 ? 
         ['Pay high-interest debt first', 'Create debt repayment plan'] :
@@ -281,29 +319,6 @@ class SLMService {
         'Diversify investments', 'Increase investment amount gradually',
         'Review and rebalance portfolio annually'
       ]
-    };
-  }
-
-  static generateRuleBasedInvestmentReadiness(analysis) {
-    const readinessScore = analysis.readinessScore;
-    
-    const readinessLevel = readinessScore >= 80 ? 'Ready' :
-                        readinessScore >= 60 ? 'Almost Ready' :
-                        readinessScore >= 40 ? 'Getting Started' : 'Not Ready';
-
-    return {
-      isReady: analysis.canInvest,
-      readinessScore: readinessScore,
-      readinessLevel: readinessLevel,
-      recommendation: {
-        investmentType: analysis.riskTolerance === 'conservative' ? 'Debt Funds' : 
-                       analysis.riskTolerance === 'moderate' ? 'Hybrid Funds' : 'Equity Funds',
-        amount: analysis.suggestedInvestmentAmount,
-        timeframe: analysis.recommendedTimeframe,
-        expectedReturns: analysis.riskTolerance === 'conservative' ? '6-8%' : 
-                       analysis.riskTolerance === 'moderate' ? '8-12%' : '12-15%',
-        riskLevel: analysis.riskTolerance
-      }
     };
   }
 

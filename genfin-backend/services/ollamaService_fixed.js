@@ -46,7 +46,7 @@ Answer:`;
         temperature: 0.7,
         top_p: 0.9
       }, {
-        timeout: 45000  // Increased to 45 seconds
+        timeout: 20000
       });
 
       const answer = response.data.response.trim();
@@ -66,13 +66,10 @@ Answer:`;
           return 'Debt is money you owe to lenders. It includes loans, credit card balances, and mortgages. Good debt (like home loans) can build wealth, while bad debt (like high-interest credit cards) can hurt your finances. Always prioritize paying high-interest debt first.';
         }
         if (q.includes('tax')) {
-          return 'Tax is a mandatory charge by government on your income and purchases. In India, you pay income tax on earnings, GST on purchases, and capital gains on investments. Smart tax planning through deductions under Section 80C (PPF, ELSS, insurance) and 80D (health insurance) can reduce your tax burden legally.';
+          return 'Tax is a mandatory charge by government on your income and purchases. In India, you pay income tax on earnings, GST on purchases, and capital gains on investments. Smart tax planning through deductions (80C, 80D) can reduce your tax burden legally.';
         }
         if (q.includes('government scheme')) {
-          return 'Indian government schemes include PPF (7.1% tax-free for retirement), SSY (8.0% for girl child), NSC (7.7% for tax saving), KVP (7.5% doubles your money), and SCSS (8.2% for seniors). Each serves different financial goals with government backing.';
-        }
-        if (q.includes('sip') || q.includes('systematic investment plan')) {
-          return 'SIP lets you invest fixed amounts monthly in mutual funds. Instead of investing ₹1.2 lakh at once, invest ₹10,000 monthly. This averages your purchase cost (rupee cost averaging) and builds discipline. ₹5,000/month for 10 years at 12% gives ₹11.6 lakhs on just ₹6 lakh invested.';
+          return 'Indian government schemes include PPF (7.1% tax-free), SSY (8.0% for girls), NSC (7.7%), KVP (7.5%), and SCSS (8.2% for seniors). Each offers different benefits for various financial goals.';
         }
         return 'I can help with personal finance, investments, tax planning, retirement, insurance, and government schemes. Please try your question again or ensure the AI service is available.';
       }

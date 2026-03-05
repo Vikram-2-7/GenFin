@@ -202,9 +202,10 @@ router.post("/action-plan", async (req, res) => {
  * Uses current financial profile (if provided) plus the user's question
  * to generate an educational, low‑risk answer.
  */
-router.post("/chat", async (req, res) => {
+router.post('/chat', async (req, res) => {
   try {
-    const { message, profile } = req.body || {};
+    const { message } = req.body;
+    const profile = req.user || {};
 
     if (!message || typeof message !== "string") {
       return res.status(400).json({
@@ -213,30 +214,7 @@ router.post("/chat", async (req, res) => {
       });
     }
 
-    const baseAnalysis = profile
-      ? SLMService.performRuleBasedAnalysis(profile)
-      : {
-          income: 0,
-          expenses: 0,
-          savings: 0,
-          debt: 0,
-          emergencyFundMonths: 0,
-          expenseRatio: "0.0",
-          savingsRate: "0.0",
-          debtRatio: "0.0",
-          stabilityScore: 0,
-          riskScore: 0,
-          readinessScore: 0,
-          status: "Financial Profile Not Provided",
-          riskTolerance: profile?.riskTolerance || "Not specified"
-        };
-
-    const enriched = {
-      ...baseAnalysis,
-      userQuestion: message
-    };
-
-    const reply = await OllamaService.generateExplanation(enriched, "chat");
+    const reply = await OllamaService.generateResponse(message, profile);
 
     return res.status(200).json({
       success: true,
@@ -356,7 +334,11 @@ router.get("/latest-profile", async (req, res) => {
  */
 router.post("/financial-health-summary", async (req, res) => {
   try {
-    const { profile } = req.body || {};
+    console.log('📊 DEBUG: Financial health summary called');
+    console.log('📊 DEBUG: Request body:', JSON.stringify(req.body));
+    
+    const profile = req.body;
+    console.log('📊 DEBUG: Profile received:', profile ? 'yes' : 'no');
     
     if (!profile) {
       return res.status(400).json({
@@ -365,7 +347,9 @@ router.post("/financial-health-summary", async (req, res) => {
       });
     }
 
+    console.log('📊 DEBUG: About to call SLMService.getComprehensiveFinancialSummary');
     const comprehensiveAnalysis = await SLMService.getComprehensiveFinancialSummary(profile);
+    console.log('📊 DEBUG: Analysis completed successfully');
     
     return res.status(200).json({
       success: true,

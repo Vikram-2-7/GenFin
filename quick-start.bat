@@ -21,3 +21,6 @@ start cmd /k "cd /d D:\genfinproj\GenFin v3\project && npm run dev"
 echo ================================
 echo GenFin System Started
 echo ================================
+
+timeout /t 5
+start http://localhost:5173

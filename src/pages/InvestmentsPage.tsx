@@ -230,6 +230,14 @@ function InvestmentsPage() {
                       <button className="px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-lg hover:from-emerald-600 hover:to-emerald-700 transition-all font-semibold shadow-lg hover:shadow-emerald-500/30">
                         Learn More
                       </button>
+                      {investment.name.includes('ETF') && (
+                        <button 
+                          onClick={() => window.open('https://www.nseindia.com/market-data/equity-etfs', '_blank')}
+                          className="ml-3 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all font-semibold shadow-lg hover:shadow-blue-500/30"
+                        >
+                          Visit ETF Hub
+                        </button>
+                      )}
                     </div>
                   </div>
                 )}

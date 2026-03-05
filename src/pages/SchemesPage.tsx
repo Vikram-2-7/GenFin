@@ -12,13 +12,15 @@ interface Scheme {
   eligibility: string[];
   benefits: string[];
   taxBenefits: string;
+  websiteUrl?: string;
 }
 
 interface SchemesPageProps {
   onSchemeDetail: (schemeId: string) => void;
+  selectedSchemeId?: string;
 }
 
-function SchemesPage({ onSchemeDetail }: SchemesPageProps) {
+function SchemesPage({ onSchemeDetail, selectedSchemeId }: SchemesPageProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const schemes: Scheme[] = [
@@ -42,6 +44,7 @@ function SchemesPage({ onSchemeDetail }: SchemesPageProps) {
         'Partial withdrawal after 7 years',
       ],
       taxBenefits: 'Tax deduction under Section 80C up to ₹1.5 lakh. Interest earned is tax-free.',
+      websiteUrl: 'https://www.postoffice.gov.in'
     },
     {
       id: '2',
@@ -63,6 +66,7 @@ function SchemesPage({ onSchemeDetail }: SchemesPageProps) {
         'Account matures after 21 years',
       ],
       taxBenefits: 'Tax deduction under Section 80C. Interest and maturity amount are completely tax-free.',
+      websiteUrl: 'https://www.postoffice.gov.in'
     },
     {
       id: '3',
@@ -84,6 +88,7 @@ function SchemesPage({ onSchemeDetail }: SchemesPageProps) {
         'Can be transferred between post offices',
       ],
       taxBenefits: 'Tax deduction under Section 80C on investment amount. Interest is taxable but deemed reinvested.',
+      websiteUrl: 'https://www.postoffice.gov.in'
     },
     {
       id: '4',
@@ -105,6 +110,7 @@ function SchemesPage({ onSchemeDetail }: SchemesPageProps) {
         'Premature withdrawal after 2.5 years',
       ],
       taxBenefits: 'No tax deduction on investment. Interest is taxable as per income tax slab.',
+      websiteUrl: 'https://www.postoffice.gov.in'
     },
     {
       id: '5',
@@ -126,6 +132,7 @@ function SchemesPage({ onSchemeDetail }: SchemesPageProps) {
         'Extension possible for 3 more years',
       ],
       taxBenefits: 'Tax deduction under Section 80C up to ₹1.5 lakh. Interest is taxable but TDS only if exceeds ₹50,000.',
+      websiteUrl: 'https://www.postoffice.gov.in'
     },
     {
       id: '6',
@@ -147,6 +154,7 @@ function SchemesPage({ onSchemeDetail }: SchemesPageProps) {
         'Return of corpus to nominee',
       ],
       taxBenefits: 'Tax deduction under Section 80CCD(1) up to ₹1.5 lakh.',
+      websiteUrl: 'https://www.npslite.gov.in'
     },
   ];
 
@@ -263,12 +271,22 @@ function SchemesPage({ onSchemeDetail }: SchemesPageProps) {
                     <p className="text-slate-300 text-sm">{scheme.taxBenefits}</p>
                   </div>
 
-                  <button
-                    onClick={() => onSchemeDetail(scheme.id)}
-                    className="px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-lg hover:from-emerald-600 hover:to-emerald-700 transition-all font-semibold shadow-lg hover:shadow-emerald-500/30"
-                  >
-                    Get Detailed Information
-                  </button>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => onSchemeDetail(scheme.id)}
+                      className="px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-lg hover:from-emerald-600 hover:to-emerald-700 transition-all font-semibold shadow-lg hover:shadow-emerald-500/30"
+                    >
+                      Get Detailed Information
+                    </button>
+                    {scheme.websiteUrl && (
+                      <button
+                        onClick={() => window.open(scheme.websiteUrl, '_blank')}
+                        className="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all font-semibold shadow-lg hover:shadow-blue-500/30"
+                      >
+                        Visit Official Site
+                      </button>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
