@@ -395,6 +395,445 @@ class SLMService {
   }
 
   /**
+   * Get user's complete financial profile history
+   */
+  static async getProfileHistory() {
+    try {
+      // For now, return the current profile from localStorage simulation
+      // In a real implementation, this would fetch from database
+      const profileData = this.getCurrentProfileFromStorage();
+      
+      if (!profileData) {
+        return {
+          hasProfile: false,
+          message: "No profile data found. Please complete your financial profile first."
+        };
+      }
+
+      const analysis = this.performRuleBasedAnalysis(profileData);
+      const actionPlan = this.generateActionPlan(analysis);
+      
+      return {
+        hasProfile: true,
+        profile: profileData,
+        currentAnalysis: analysis,
+        actionPlan: actionPlan,
+        lastUpdated: profileData.lastUpdated || new Date().toISOString(),
+        profileCompleteness: this.calculateProfileCompleteness(profileData)
+      };
+    } catch (error) {
+      console.error('Profile History Error:', error);
+      throw new Error(`Failed to fetch profile history: ${error.message}`);
+    }
+  }
+
+  /**
+   * Get comprehensive financial health summary with statistics and guided path
+   */
+  static async getComprehensiveFinancialSummary(profileData) {
+    try {
+      // Basic analysis
+      const analysis = this.performRuleBasedAnalysis(profileData);
+      
+      // Enhanced statistics
+      const statistics = this.generateFinancialStatistics(profileData, analysis);
+      
+      // Guided path recommendations
+      const guidedPath = this.generateGuidedPath(analysis, profileData);
+      
+      // Risk assessment
+      const riskAssessment = this.assessRisk(analysis);
+      
+      // Key insights
+      const insights = this.extractKeyInsights(analysis);
+      
+      // Action plan
+      const actionPlan = this.generateActionPlan(analysis);
+      
+      // Investment readiness
+      const investmentReadiness = await this.getInvestmentRecommendation(profileData);
+
+      return {
+        timestamp: new Date().toISOString(),
+        
+        // Core Analysis
+        analysis: {
+          ...analysis,
+          insights: insights,
+          riskAssessment: riskAssessment
+        },
+        
+        // Financial Statistics
+        statistics: statistics,
+        
+        // Guided Path
+        guidedPath: guidedPath,
+        
+        // Action Plan
+        actionPlan: actionPlan,
+        
+        // Investment Guidance
+        investmentReadiness: investmentReadiness,
+        
+        // Profile Health
+        profileHealth: {
+          completeness: this.calculateProfileCompleteness(profileData),
+          dataQuality: this.assessDataQuality(profileData),
+          recommendations: this.getProfileImprovementSuggestions(profileData)
+        }
+      };
+    } catch (error) {
+      console.error('Comprehensive Summary Error:', error);
+      throw new Error(`Failed to generate comprehensive summary: ${error.message}`);
+    }
+  }
+
+  /**
+   * Generate detailed financial statistics
+   */
+  static generateFinancialStatistics(profileData, analysis) {
+    const income = profileData.income || 0;
+    const expenses = profileData.expenses || 0;
+    const savings = profileData.savings || 0;
+    const debt = profileData.debt || 0;
+    
+    return {
+      cashFlow: {
+        monthlyIncome: income,
+        monthlyExpenses: expenses,
+        monthlySavings: savings,
+        netCashFlow: income - expenses - savings,
+        savingsRate: analysis.savingsRate,
+        expenseRatio: analysis.expenseRatio
+      },
+      
+      emergencyFund: {
+        currentMonths: profileData.emergencyFundMonths || 0,
+        targetMonths: 6,
+        adequacyScore: Math.min(100, ((profileData.emergencyFundMonths || 0) / 6) * 100),
+        recommendedAmount: expenses * 6,
+        currentAmount: savings * (profileData.emergencyFundMonths || 0),
+        gap: Math.max(0, (expenses * 6) - (savings * (profileData.emergencyFundMonths || 0)))
+      },
+      
+      debtAnalysis: {
+        totalDebt: debt,
+        debtToIncomeRatio: analysis.debtRatio,
+        monthlyDebtPayment: debt > 0 ? (debt * 0.05) : 0, // Assuming 5% monthly payment
+        debtBurden: debt > (income * 12 * 0.3) ? 'High' : debt > (income * 12 * 0.2) ? 'Moderate' : 'Low'
+      },
+      
+      investmentCapacity: {
+        readinessScore: analysis.readinessScore,
+        canInvest: analysis.canInvest,
+        recommendedInvestmentAmount: analysis.canInvest ? Math.max(0, (income * 0.15)) : 0,
+        riskCapacity: this.assessRiskCapacity(analysis),
+        suggestedProducts: this.getSuggestedInvestmentProducts(analysis)
+      },
+      
+      financialHealthScore: {
+        overall: Math.round((analysis.stabilityScore + (100 - analysis.riskScore) + analysis.readinessScore) / 3),
+        stability: analysis.stabilityScore,
+        risk: 100 - analysis.riskScore,
+        readiness: analysis.readinessScore,
+        trend: 'stable' // In real implementation, would track over time
+      }
+    };
+  }
+
+  /**
+   * Generate guided financial path based on current situation
+   */
+  static generateGuidedPath(analysis, profileData) {
+    const readinessScore = analysis.readinessScore;
+    const emergencyMonths = profileData.emergencyFundMonths || 0;
+    const savingsRate = parseFloat(analysis.savingsRate);
+    const debtRatio = parseFloat(analysis.debtRatio);
+    
+    let currentPhase = '';
+    let nextPhase = '';
+    let immediateActions = [];
+    let shortTermGoals = [];
+    let longTermVision = [];
+    
+    // Determine current phase
+    if (readinessScore < 40) {
+      currentPhase = 'Foundation Building';
+      nextPhase = 'Stability Enhancement';
+      immediateActions = [
+        'Create detailed monthly budget',
+        'Build emergency fund to 3 months',
+        'Reduce high-interest debt',
+        'Increase savings rate to 15%'
+      ];
+      shortTermGoals = [
+        'Achieve 3-month emergency fund',
+        'Reduce expenses to 60% of income',
+        'Establish consistent savings habit'
+      ];
+      longTermVision = [
+        'Reach 6-month emergency fund',
+        'Become debt-free',
+        'Develop investment discipline'
+      ];
+    } else if (readinessScore < 60) {
+      currentPhase = 'Stability Enhancement';
+      nextPhase = 'Investment Preparation';
+      immediateActions = [
+        'Increase emergency fund to 6 months',
+        'Optimize expense ratio below 50%',
+        'Maintain savings rate of 20%',
+        'Research low-risk investment options'
+      ];
+      shortTermGoals = [
+        'Complete 6-month emergency fund',
+        'Achieve debt-to-income ratio below 20%',
+        'Start conservative investment education'
+      ];
+      longTermVision = [
+        'Build diversified investment portfolio',
+        'Achieve financial independence milestones',
+        'Create long-term wealth strategy'
+      ];
+    } else if (readinessScore < 80) {
+      currentPhase = 'Investment Preparation';
+      nextPhase = 'Wealth Building';
+      immediateActions = [
+        'Start systematic investment plan (SIP)',
+        'Diversify into low-risk instruments',
+        'Set up automatic investment transfers',
+        'Monitor and rebalance portfolio quarterly'
+      ];
+      shortTermGoals = [
+        'Build 1-year investment track record',
+        'Achieve portfolio diversification',
+        'Maximize tax-advantaged investments'
+      ];
+      longTermVision = [
+        'Achieve financial independence',
+        'Build substantial investment portfolio',
+        'Create passive income streams'
+      ];
+    } else {
+      currentPhase = 'Wealth Building';
+      nextPhase = 'Financial Freedom';
+      immediateActions = [
+        'Optimize investment allocation',
+        'Explore advanced investment strategies',
+        'Plan for major life goals',
+        'Consider philanthropic giving'
+      ];
+      shortTermGoals = [
+        'Achieve target net worth',
+        'Maximize investment returns',
+        'Build multiple income streams'
+      ];
+      longTermVision = [
+        'Complete financial freedom',
+        'Legacy planning',
+        'Financial mentorship for others'
+      ];
+    }
+    
+    return {
+      currentPhase,
+      nextPhase,
+      phaseProgress: Math.min(100, readinessScore),
+      immediateActions,
+      shortTermGoals,
+      longTermVision,
+      estimatedTimeline: this.estimatePhaseTimeline(readinessScore),
+      milestones: this.generateMilestones(analysis, profileData)
+    };
+  }
+
+  /**
+   * Calculate profile completeness percentage
+   */
+  static calculateProfileCompleteness(profileData) {
+    const requiredFields = [
+      'income', 'expenses', 'savings', 'debt', 
+      'emergencyFundMonths', 'age', 'investmentMindset'
+    ];
+    
+    const optionalFields = [
+      'fullName', 'email', 'phone', 'financialStatus'
+    ];
+    
+    let requiredComplete = 0;
+    let optionalComplete = 0;
+    
+    requiredFields.forEach(field => {
+      if (profileData[field] && profileData[field] !== '') {
+        requiredComplete++;
+      }
+    });
+    
+    optionalFields.forEach(field => {
+      if (profileData[field] && profileData[field] !== '') {
+        optionalComplete++;
+      }
+    });
+    
+    const requiredScore = (requiredComplete / requiredFields.length) * 70;
+    const optionalScore = (optionalComplete / optionalFields.length) * 30;
+    
+    return Math.round(requiredScore + optionalScore);
+  }
+
+  /**
+   * Assess data quality of profile
+   */
+  static assessDataQuality(profileData) {
+    const issues = [];
+    const warnings = [];
+    
+    // Check for logical inconsistencies
+    if (profileData.income && profileData.expenses && profileData.savings) {
+      const calculatedSavings = profileData.income - profileData.expenses;
+      if (Math.abs(calculatedSavings - profileData.savings) > profileData.income * 0.1) {
+        warnings.push('Savings amount seems inconsistent with income minus expenses');
+      }
+    }
+    
+    if (profileData.income && profileData.income < 1000) {
+      issues.push('Income seems unusually low');
+    }
+    
+    if (profileData.expenses && profileData.income && (profileData.expenses / profileData.income) > 1) {
+      issues.push('Expenses exceed income - please verify data');
+    }
+    
+    return {
+      score: issues.length === 0 ? (warnings.length === 0 ? 'high' : 'medium') : 'low',
+      issues,
+      warnings,
+      recommendations: this.getDataQualityRecommendations(issues, warnings)
+    };
+  }
+
+  /**
+   * Get profile improvement suggestions
+   */
+  static getProfileImprovementSuggestions(profileData) {
+    const suggestions = [];
+    
+    if (!profileData.fullName || profileData.fullName === '') {
+      suggestions.push('Add your full name for personalized experience');
+    }
+    
+    if (!profileData.investmentMindset || profileData.investmentMindset === '') {
+      suggestions.push('Select your investment mindset to get tailored recommendations');
+    }
+    
+    if (!profileData.financialStatus || profileData.financialStatus === '') {
+      suggestions.push('Indicate your current financial status for better guidance');
+    }
+    
+    if (profileData.emergencyFundMonths === undefined || profileData.emergencyFundMonths === '') {
+      suggestions.push('Specify emergency fund months for accurate risk assessment');
+    }
+    
+    return suggestions;
+  }
+
+  /**
+   * Helper methods for guided path generation
+   */
+  static assessRiskCapacity(analysis) {
+    if (analysis.readinessScore >= 80) return 'high';
+    if (analysis.readinessScore >= 60) return 'moderate';
+    return 'low';
+  }
+
+  static getSuggestedInvestmentProducts(analysis) {
+    if (!analysis.canInvest) return [];
+    
+    if (analysis.readinessScore >= 80) {
+      return ['Index Funds', 'ETFs', 'Government Bonds', 'Debt Funds', 'Digital Gold'];
+    } else if (analysis.readinessScore >= 60) {
+      return ['Index Funds', 'Government Bonds', 'Debt Funds'];
+    } else {
+      return ['Government Bonds', 'Debt Funds'];
+    }
+  }
+
+  static estimatePhaseTimeline(readinessScore) {
+    if (readinessScore < 40) return '6-12 months';
+    if (readinessScore < 60) return '3-6 months';
+    if (readinessScore < 80) return '2-4 months';
+    return '1-3 months';
+  }
+
+  static generateMilestones(analysis, profileData) {
+    const milestones = [];
+    
+    // Emergency fund milestones
+    const currentMonths = profileData.emergencyFundMonths || 0;
+    if (currentMonths < 6) {
+      milestones.push({
+        title: 'Build Emergency Fund',
+        target: '6 months of expenses',
+        current: `${currentMonths} months`,
+        progress: Math.min(100, (currentMonths / 6) * 100),
+        priority: 'high'
+      });
+    }
+    
+    // Savings rate milestones
+    const savingsRate = parseFloat(analysis.savingsRate);
+    if (savingsRate < 20) {
+      milestones.push({
+        title: 'Increase Savings Rate',
+        target: '20% of income',
+        current: `${savingsRate.toFixed(1)}%`,
+        progress: Math.min(100, (savingsRate / 20) * 100),
+        priority: 'high'
+      });
+    }
+    
+    // Investment readiness milestones
+    if (analysis.readinessScore < 75) {
+      milestones.push({
+        title: 'Investment Readiness',
+        target: '75/100 score',
+        current: `${analysis.readinessScore}/100`,
+        progress: (analysis.readinessScore / 75) * 100,
+        priority: 'medium'
+      });
+    }
+    
+    return milestones;
+  }
+
+  static getDataQualityRecommendations(issues, warnings) {
+    const recommendations = [];
+    
+    if (issues.length > 0) {
+      recommendations.push('Please review and correct the data inconsistencies highlighted');
+    }
+    
+    if (warnings.length > 0) {
+      recommendations.push('Consider updating your financial data for more accurate analysis');
+    }
+    
+    if (issues.length === 0 && warnings.length === 0) {
+      recommendations.push('Your profile data looks good and consistent');
+    }
+    
+    return recommendations;
+  }
+
+  /**
+   * Get current profile from storage (simulated localStorage)
+   */
+  static getCurrentProfileFromStorage() {
+    // In a real implementation, this would fetch from database
+    // For now, return null to indicate no stored profile
+    return null;
+  }
+
+  /**
    * Health check for SLM
    */
   static async healthCheck() {

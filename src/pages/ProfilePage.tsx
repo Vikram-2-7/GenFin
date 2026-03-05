@@ -308,6 +308,21 @@ function ProfilePage() {
 
   const handleSaveProfile = async () => {
     try {
+      // Ensure analysis is run before saving
+      if (!result) {
+        // Auto-run analysis if not already done
+        handleAssessment();
+        
+        // Wait a bit for analysis to complete
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // If still no result, show error
+        if (!result) {
+          alert("Please analyze your financial profile first by clicking 'Analyze Financial Health' button.");
+          return;
+        }
+      }
+
       // prepare data; blanks are fine
       const profileData = {
         // Personal Information
@@ -330,7 +345,7 @@ function ProfilePage() {
         // Financial Status Selection
         financialStatus: financialStatus,
 
-        // Scores and Analysis Results (may be undefined if not yet calculated)
+        // Scores and Analysis Results
         stabilityScore: result?.stabilityScore,
         riskScore: result?.riskScore,
         readinessScore: result?.readinessScore,
@@ -344,6 +359,15 @@ function ProfilePage() {
         // Dynamic Feedbacks
         feedbacks: result?.feedbacks || []
       };
+
+      // Persist for SLM / GenFin.ai usage
+      try {
+        localStorage.setItem('genfin_profile_for_slm', JSON.stringify(profileData));
+      } catch {
+        // ignore storage errors
+      }
+
+      console.log("Sending profile data to backend:", profileData);
 
       const response = await fetch("http://localhost:5000/api/profile/save-profile", {
         method: "POST",
@@ -366,7 +390,7 @@ function ProfilePage() {
       setTimeout(() => setShowAlert(false), 3000);
     } catch (error) {
       console.error("Save error:", error);
-      alert("Server error while saving profile.");
+      alert("Server error while saving profile. Please check your internet connection and try again.");
     }
   };
 
@@ -446,7 +470,31 @@ function ProfilePage() {
   const analysis = analyzeFinancialHealth(numericData);
   const feedbacks = generateDynamicFeedback(analysis);
   
-  setResult({ ...analysis, feedbacks });
+  const mergedResult = { ...analysis, feedbacks };
+  setResult(mergedResult);
+
+  // keep SLM profile snapshot in sync as user tweaks values
+  try {
+    const slmProfile = {
+      age: numericData.age,
+      income: numericData.income,
+      expenses: numericData.expenses,
+      savings: numericData.savings,
+      debt: numericData.debt,
+      emergencyFundMonths: numericData.emergencyFundMonths,
+      investmentMindset: mindsetSelected,
+      financialStatus: financialStatus,
+      stabilityScore: mergedResult.stabilityScore,
+      riskScore: mergedResult.riskScore,
+      readinessScore: mergedResult.readinessScore,
+      expenseRatio: mergedResult.expenseRatio,
+      savingsRate: mergedResult.savingsRate,
+      debtRatio: mergedResult.debtRatio
+    };
+    localStorage.setItem('genfin_profile_for_slm', JSON.stringify(slmProfile));
+  } catch {
+    // ignore storage error
+  }
 };
 
   const handleParentDataSave = async () => {

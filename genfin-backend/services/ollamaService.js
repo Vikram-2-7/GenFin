@@ -85,6 +85,9 @@ CALCULATED METRICS:
 - Financial Status: ${data.status}
 - Risk Tolerance: ${data.riskTolerance || 'Not specified'}
 
+USER QUESTION (if provided):
+- ${data.userQuestion || 'N/A'}
+
 INSTRUCTIONS:
 `;
 
@@ -119,6 +122,21 @@ Based on the readiness score and financial metrics, provide investment guidance:
 4. What to avoid
 
 Keep it practical and match their readiness level.`;
+
+      case 'chat':
+        return basePrompt + `
+The user is having a conversation with you, their financial assistant. They've asked: "${data.userQuestion || 'general financial question'}"
+
+RESPONSE GUIDELINES:
+- Be conversational, friendly, and helpful
+- Answer their question naturally without strict topic limitations
+- You can discuss general financial topics, life goals, education, career advice related to finance
+- Keep responses concise (2-4 paragraphs max)
+- If they ask about investments, focus on safe, regulated options suitable for Indian investors
+- If they ask personal questions, be friendly but gently guide back to financial topics
+- Use simple, encouraging language
+
+IMPORTANT: Be helpful and conversational, not restrictive. The goal is to build a helpful relationship with the user while providing sound financial guidance.`;
 
       default:
         return basePrompt + 'Provide a comprehensive but concise financial analysis.';
@@ -169,6 +187,79 @@ Keep it practical and match their readiness level.`;
         return ready 
           ? `You're ready to start investing. Given your readiness score of ${readinessScore}/100, consider starting with low-cost index funds or SIPs. Start conservatively and increase exposure as your confidence grows.`
           : `Focus on building your financial foundation first. Reach a readiness score of 60+ by increasing emergency savings and reducing expenses. You'll be investment-ready soon.`;
+
+      case 'chat': {
+        const rawQuestion = (data.userQuestion || '').trim();
+        const q = rawQuestion.toLowerCase();
+
+        // 1. Pure greeting / small talk
+        if (!q || /^(hi|hello|hey|good\s+morning|good\s+evening)/i.test(rawQuestion)) {
+          return `Hi, I’m GenFin.ai — your low‑risk money guide. I don’t know your name, but I can help you understand your income, expenses, savings, and safe investment options.\n\nTell me three things in one line: your monthly income, approximate total monthly expenses, and any goal you care about (for example: “income 40,000, expense 22,000, goal emergency fund and house”). Then I’ll break down your financial health and next steps.`;
+        }
+
+        // Helper: describe readiness in words
+        const describeReadiness = () => {
+          if (typeof readinessScore !== 'number') return '';
+          if (readinessScore >= 75) {
+            return `Your readiness score of ${readinessScore}/100 suggests a strong position — you can invest as long as you stick to low‑risk, long‑term instruments.`;
+          } else if (readinessScore >= 60) {
+            return `Your readiness score of ${readinessScore}/100 means you can begin conservative investing, but you should keep strengthening your safety net (especially emergency savings).`;
+          } else {
+            return `Your readiness score of ${readinessScore}/100 shows you should first focus on basics like building an emergency fund and controlling expenses before investing.`;
+          }
+        };
+
+        // Helper: summarize metrics if we have them
+        const summarizeMetrics = () => {
+          const sr = typeof data.savingsRate === 'number' ? data.savingsRate : parseFloat(data.savingsRate || '0');
+          const er = typeof data.expenseRatio === 'number' ? data.expenseRatio : parseFloat(data.expenseRatio || '0');
+          const dr = typeof data.debtRatio === 'number' ? data.debtRatio : parseFloat(data.debtRatio || '0');
+          const ef = typeof data.emergencyFundMonths === 'number'
+            ? data.emergencyFundMonths
+            : (data.inputData?.emergencyFundMonths ?? 0);
+
+          const parts = [];
+          if (!Number.isNaN(er) && er > 0) parts.push(`expenses are about ${er.toFixed(1)}% of income`);
+          if (!Number.isNaN(sr) && sr > 0) parts.push(`you save roughly ${sr.toFixed(1)}% each month`);
+          if (!Number.isNaN(dr) && dr > 0) parts.push(`your debt load is about ${(dr * 100).toFixed(1)}% of annual income`);
+          if (ef > 0) parts.push(`emergency fund covers around ${ef.toFixed(1)} months of expenses`);
+
+          if (!parts.length) {
+            return `I don’t yet have your detailed numbers, so I’ll answer in general terms.`;
+          }
+          return `From your profile I see that ${parts.join(', ')}.`;
+        };
+
+        // 2. Non‑financial question (like “what’s my name?”)
+        const looksNonFinancial = !/(income|salary|expense|spend|saving|invest|scheme|goal|debt|loan|fund|ppf|etf|bond)/i.test(
+          rawQuestion
+        );
+        if (looksNonFinancial) {
+          return `I’m focused only on money topics — budgeting, savings discipline, government schemes, and low‑risk investing. I can’t answer personal questions like your name or non‑financial topics, but I can help you plan your money.\n\nIf you want to start, tell me: “income X, expenses Y, goal Z”, and I’ll explain your financial health and a safe next step.`;
+        }
+
+        // 3. Financial question: give a richer, varied answer
+        const intro = `You asked: “${rawQuestion}”.`;
+        const metricsLine = summarizeMetrics();
+        const readinessLine = describeReadiness();
+
+        let stateLine = '';
+        if (typeof status === 'string' && status.toLowerCase().includes('stable')) {
+          stateLine =
+            'Overall, your base looks stable. The priority is to keep expenses under control, protect your emergency fund, and invest only from clear surplus in safe instruments like index ETFs, government bonds, or high‑quality debt funds.';
+        } else if (typeof status === 'string' && status.toLowerCase().includes('moderate')) {
+          stateLine =
+            'You’re on the right path but still in a “build‑up” phase. Focus on taking your emergency fund to at least 3–6 months and tightening any avoidable lifestyle spending before increasing investments.';
+        } else if (status) {
+          stateLine =
+            'Right now your profile leans toward higher risk. Protect yourself first by building a basic emergency fund, reducing high‑interest debt, and strictly avoiding speculative trading, leverage, or crypto.';
+        }
+
+        const nextStep =
+          'For this month, choose one concrete action: (1) write down a simple budget (income vs fixed vs variable expenses), (2) set an automatic transfer into an emergency‑fund account right after salary credit, or (3) start a very small SIP into a safe, long‑term product like a broad‑market index ETF or a government‑backed scheme once surplus is clear.';
+
+        return `${intro}\n\n${metricsLine}\n\n${readinessLine}\n\n${stateLine}\n\n${nextStep}`;
+      }
 
       default:
         return `Your financial metrics show a ${status.toLowerCase()} state. Review the specific action items to improve your financial health.`;

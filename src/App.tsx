@@ -7,12 +7,25 @@ import ProfilePage from './pages/ProfilePage';
 import SchemeDetailPage from './pages/SchemeDetailPage';
 import Navigation from './components/Navigation';
 import BudgetOptimizationTool from './components/BudgetOptimizationTool';
-import SLMAnalysisPage from './components/SLMAnalysisPage';
+import SLMAnalysisContainer from './components/SLMAnalysisContainer';
 import FinancialGoalsDashboard from './components/FinancialGoalsDashboard';
 import OllamaSetupValidator from './components/OllamaSetupValidator';
 import SLMPerformanceBenchmark from './components/SLMPerformanceBenchmark';
+import GenFinChatPage from './pages/GenFinChatPage';
 
-type Page = 'home' | 'investments' | 'schemes' | 'education' | 'profile' | 'scheme-detail' | 'budget-analysis' | 'slm-analysis' | 'goals' | 'tech-setup' | 'performance-test';
+type Page =
+  | 'home'
+  | 'investments'
+  | 'schemes'
+  | 'education'
+  | 'profile'
+  | 'scheme-detail'
+  | 'budget-analysis'
+  | 'slm-analysis'
+  | 'goals'
+  | 'tech-setup'
+  | 'performance-test'
+  | 'genfin-ai';
 
 interface AppState {
   page: Page;
@@ -48,13 +61,15 @@ function App() {
       case 'budget-analysis':
         return <BudgetOptimizationTool />;
       case 'slm-analysis':
-        return <SLMAnalysisPage />;
+        return <SLMAnalysisContainer />;
       case 'goals':
         return <FinancialGoalsDashboard />;
       case 'tech-setup':
         return <OllamaSetupValidator />;
       case 'performance-test':
         return <SLMPerformanceBenchmark />;
+      case 'genfin-ai':
+        return <GenFinChatPage />;
       default:
         return <HomePage onNavigate={(p) => navigate(p)} />;
     }

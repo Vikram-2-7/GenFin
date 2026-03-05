@@ -44,7 +44,7 @@ export default function OllamaSetupValidator() {
     const checkServices = async () => {
       const newServices = [...services];
 
-      // Check MongoDB
+      // Check MongoDB (via backend health – assumes Mongo connected there)
       try {
         const start = Date.now();
         const response = await fetch('http://localhost:5000/api/health', {
@@ -87,7 +87,7 @@ export default function OllamaSetupValidator() {
           signal: AbortSignal.timeout(2000)
         });
         if (response.ok) {
-          nServices[2].status = 'connected';
+          newServices[2].status = 'connected';
           newServices[2].latency = Date.now() - start;
           setSetupStep(1); // Ollama is running
         } else {

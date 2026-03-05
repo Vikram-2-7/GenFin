@@ -1,6 +1,18 @@
 import { Home, TrendingUp, Award, BookOpen, User, Zap, Target, Settings, Activity } from 'lucide-react';
 
-type Page = 'home' | 'investments' | 'schemes' | 'education' | 'profile' | 'scheme-detail' | 'budget-analysis' | 'slm-analysis' | 'goals' | 'tech-setup' | 'performance-test';
+type Page =
+  | 'home'
+  | 'investments'
+  | 'schemes'
+  | 'education'
+  | 'profile'
+  | 'scheme-detail'
+  | 'budget-analysis'
+  | 'slm-analysis'
+  | 'goals'
+  | 'tech-setup'
+  | 'performance-test'
+  | 'genfin-ai';
 
 interface NavigationProps {
   currentPage: Page;
@@ -19,15 +31,20 @@ function Navigation({ currentPage, onNavigate }: NavigationProps) {
     { id: 'goals' as Page, label: 'Financial Goals', icon: Target },
     { id: 'tech-setup' as Page, label: 'System Setup', icon: Settings },
     { id: 'performance-test' as Page, label: 'Performance Test', icon: Activity },
+    { id: 'genfin-ai' as Page, label: 'GenFin.ai', icon: Zap }
   ];
 
   return (
-    <nav className="bg-white border-b border-gray-200">
+    <nav className="bg-slate-950/95 border-b border-slate-800 backdrop-blur">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
-            <span className="text-2xl font-semibold text-gray-900">GenFin</span>
-            <span className="ml-2 text-sm text-gray-500">Financial Assistant</span>
+            <span className="text-2xl font-semibold bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent">
+              GenFin
+            </span>
+            <span className="ml-2 text-xs uppercase tracking-[0.25em] text-slate-400">
+              Financial Journey
+            </span>
           </div>
           <div className="flex space-x-1">
             {navItems.map((item) => {
@@ -37,14 +54,14 @@ function Navigation({ currentPage, onNavigate }: NavigationProps) {
                 <button
                   key={item.id}
                   onClick={() => onNavigate(item.id)}
-                  className={`flex items-center px-4 py-2 rounded-md transition-colors ${
+                  className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                     isActive
-                      ? 'bg-blue-50 text-blue-700'
-                      : 'text-gray-600 hover:bg-gray-50'
+                      ? 'bg-slate-800 text-cyan-300 border border-cyan-500/40'
+                      : 'text-slate-300 hover:bg-slate-800/80'
                   }`}
                 >
-                  <Icon size={18} />
-                  <span className="ml-2 text-sm font-medium">{item.label}</span>
+                  <Icon size={16} />
+                  <span className="ml-2">{item.label}</span>
                 </button>
               );
             })}

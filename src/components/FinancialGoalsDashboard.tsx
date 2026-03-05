@@ -102,12 +102,14 @@ export default function FinancialGoalsDashboard({
   monthlyCapacity = 30000,
   onDeleteGoal
 }: GoalsDashboardProps) {
+  const [allGoals, setAllGoals] = useState<FinancialGoal[]>(goals);
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'short-term' | 'medium-term' | 'long-term'>('all');
   const [expandedGoal, setExpandedGoal] = useState<string | null>(null);
+  const [showAddGoal, setShowAddGoal] = useState(false);
 
   const filteredGoals = selectedCategory === 'all'
-    ? goals
-    : goals.filter(g => g.category === selectedCategory);
+    ? allGoals
+    : allGoals.filter(g => g.category === selectedCategory);
 
   const getGoalStatus = (goal: FinancialGoal) => {
     const progress = (goal.currentAmount / goal.targetAmount) * 100;
