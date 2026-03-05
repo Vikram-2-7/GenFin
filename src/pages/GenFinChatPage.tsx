@@ -1,13 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Sparkles, Send, Shield, Activity, TrendingUp, AlertCircle, CheckCircle, Target, BarChart3, User, DollarSign, PiggyBank, Target as TargetIcon, Trash2 } from 'lucide-react';
+import { Sparkles, Send, Shield, Activity, TrendingUp, AlertCircle, CheckCircle, Target, BarChart3, User, DollarSign, PiggyBank, Target as TargetIcon, ArrowRight } from 'lucide-react';
 
 interface ChatMessage {
-  _id?: string;
   role: 'user' | 'assistant' | 'system';
   content: string;
   type?: 'text' | 'financial-summary' | 'guided-path' | 'statistics' | 'milestones';
   data?: any;
-  timestamp?: string;
 }
 
 interface FinancialProfile {
@@ -33,82 +31,33 @@ interface FinancialSummary {
   profileHealth: any;
 }
 
-// Load profile from database
-async function loadProfileFromDatabase(): Promise<FinancialProfile | null> {
+async function loadProfileForChat(): Promise<FinancialProfile | null> {
   try {
-    const response = await fetch('http://localhost:5000/api/profile');
+    // First try to fetch from database (latest profile)
+    const response = await fetch('http://localhost:5000/api/slm/latest-profile');
+    
     if (response.ok) {
       const data = await response.json();
       if (data.success && data.profile) {
-        console.log('✅ Profile loaded from database:', data.profile);
         return data.profile;
       }
     }
+    
+    // Fallback to localStorage if database fetch fails
+    const raw = localStorage.getItem('genfin_profile_for_slm');
+    if (!raw) return null;
+    return JSON.parse(raw);
   } catch (error) {
     console.error('Error loading profile from database:', error);
+    // Fallback to localStorage
+    try {
+      const raw = localStorage.getItem('genfin_profile_for_slm');
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
   }
-  return null;
-}
-
-// Calculate financial metrics from real profile data
-function calculateFinancialMetrics(profile: FinancialProfile) {
-  if (!profile || !profile.income || !profile.expenses) {
-    return {
-      monthlyIncome: 0,
-      monthlyExpenses: 0,
-      monthlySavings: 0,
-      netCashFlow: 0,
-      savingsRate: 0,
-      emergencyFundMonths: 0,
-      emergencyFundAdequacy: 0,
-      readinessScore: 0,
-      canInvest: false,
-      recommendedInvestmentAmount: 0
-    };
-  }
-
-  const monthlyIncome = profile.income;
-  const monthlyExpenses = profile.expenses;
-  const monthlySavings = monthlyIncome - monthlyExpenses;
-  const netCashFlow = monthlySavings;
-  const savingsRate = (monthlySavings / monthlyIncome) * 100;
-  const emergencyFundMonths = profile.emergencyFundMonths || 0;
-  const emergencyFundAdequacy = Math.min(100, (emergencyFundMonths / 6) * 100);
-  
-  // Calculate readiness score
-  let readinessScore = 0;
-  
-  // Savings rate points
-  if (savingsRate > 20) readinessScore += 25;
-  else if (savingsRate >= 10) readinessScore += 15;
-  
-  // Emergency fund points
-  if (emergencyFundMonths >= 6) readinessScore += 25;
-  else if (emergencyFundMonths >= 3) readinessScore += 15;
-  
-  // DTI points
-  const dti = profile.debt && profile.income ? (profile.debt / (profile.income * 12)) * 100 : 0;
-  if (dti < 30) readinessScore += 25;
-  else if (dti <= 40) readinessScore += 15;
-  
-  // Financial goals points
-  if (profile.financialGoals || profile.investmentMindset) readinessScore += 25;
-  
-  const canInvest = readinessScore >= 50;
-  const recommendedInvestmentAmount = canInvest ? monthlySavings * 0.3 : 0;
-  
-  return {
-    monthlyIncome,
-    monthlyExpenses,
-    monthlySavings,
-    netCashFlow,
-    savingsRate,
-    emergencyFundMonths,
-    emergencyFundAdequacy,
-    readinessScore,
-    canInvest,
-    recommendedInvestmentAmount
-  };
 }
 
 function formatCurrency(amount: number): string {
@@ -135,32 +84,88 @@ function getHealthBgColor(score: number): string {
 }
 
 export default function GenFinChatPage() {
-  // State management
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  // Helper function - defined before use
+  const calculateBasicReadinessScore = (profile: FinancialProfile): number => {
+    let score = 0;
+    
+    // Emergency fund (30 points)
+    if (profile.emergencyFundMonths && profile.emergencyFundMonths >= 6) {
+      score += 30;
+    } else if (profile.emergencyFundMonths && profile.emergencyFundMonths >= 3) {
+      score += 15;
+    }
+    
+    // Savings rate (25 points)
+    if (profile.savings && profile.income) {
+      const savingsRate = (profile.savings / profile.income) * 100;
+      if (savingsRate >= 20) {
+        score += 25;
+      } else if (savingsRate >= 10) {
+        score += 15;
+      } else if (savingsRate >= 5) {
+        score += 5;
+      }
+    }
+    
+    // Debt management (25 points)
+    if (profile.debt && profile.income) {
+      const debtRatio = (profile.debt / profile.income) * 100;
+      if (debtRatio <= 20) {
+        score += 25;
+      } else if (debtRatio <= 40) {
+        score += 15;
+      } else if (debtRatio <= 60) {
+        score += 5;
+      }
+    } else {
+      score += 25; // No debt is good
+    }
+    
+    // Income stability (20 points)
+    if (profile.income && profile.income > 0) {
+      score += 20;
+    }
+    
+    return Math.min(100, score);
+  };
+
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    {
+      role: 'assistant',
+      content:
+        'Welcome to GenFin.ai, your intelligent financial health assistant! I can help you understand your financial situation, provide personalized guidance, and create a path to financial stability. How can I assist you today?'
+    }
+  ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState<FinancialProfile | null>(null);
-  const [financialMetrics, setFinancialMetrics] = useState<any>(null);
 
-  // Load profile and chat history on mount
   useEffect(() => {
-    const initializeApp = async () => {
-      console.log('🔍 DEBUG: Initializing GenFin Chat Page...');
+    const initializeProfile = async () => {
+      const loadedProfile = await loadProfileForChat();
+      setProfile(loadedProfile);
       
-      // Step 1: Load profile from database
-      const loadedProfile = await loadProfileFromDatabase();
-      console.log('🔍 DEBUG: Profile loaded:', loadedProfile);
+      if (!loadedProfile || !loadedProfile.income || !loadedProfile.expenses) {
+        // Redirect to profile page if no financial data exists
+        setMessages(prev => [
+          prev[0],
+          {
+            role: 'system',
+            content: '⚠️ Profile Required - No Financial Data Found',
+            type: 'text'
+          },
+          {
+            role: 'assistant',
+            content: '**Welcome to GenFin.ai - Your Intelligent Financial Health Assistant!**\n\nI\'m here to provide you with personalized financial guidance, but first I need to understand your financial situation.\n\n**📋 Required Information:**\n• Monthly income & expenses\n• Savings amount\n• Current debt (if any)\n• Emergency fund status\n• Investment preferences\n\n**🎯 What I\'ll Do With Your Data:**\n✅ Calculate your financial health score\n✅ Create personalized recommendations\n✅ Generate a guided financial path\n✅ Provide AI-powered insights\n✅ Track your progress over time\n\n**⚡ Quick Start:**\n1. Click the **Profile** button in the navigation above\n2. Fill in your financial information\n3. Click "Analyze Financial Health"\n4. Save your profile\n5. Come back here for personalized guidance!\n\nYour financial data is stored securely and used only to provide you with better guidance. Let\'s get started on your financial journey! 🌟',
+            type: 'text'
+          }
+        ]);
+        return;
+      }
       
       if (loadedProfile && loadedProfile.income && loadedProfile.expenses) {
-        setProfile(loadedProfile);
-        
-        // Step 2: Calculate financial metrics from REAL data
-        const metrics = calculateFinancialMetrics(loadedProfile);
-        console.log('🔍 DEBUG: Financial metrics calculated:', metrics);
-        setFinancialMetrics(metrics);
-        
-        // Step 3: Generate proactive message with REAL readiness score
-        const readinessScore = metrics.readinessScore;
+        // Auto-generate proactive welcome message with profile context
+        const readinessScore = calculateBasicReadinessScore(loadedProfile);
         let proactiveMessage = '';
         
         if (readinessScore >= 75) {
@@ -171,114 +176,25 @@ export default function GenFinChatPage() {
           proactiveMessage = `Welcome back! I can see you're in the early stages of your financial journey. Your readiness score is ${readinessScore}/100. Don't worry - I'm here to help you build a strong foundation. What would you like to work on first?`;
         }
         
-        setMessages([{
-          role: 'assistant',
-          content: proactiveMessage,
-          timestamp: new Date().toISOString()
-        }]);
-      } else {
-        // No profile data - show setup message
-        setMessages([{
-          role: 'assistant',
-          content: '**Welcome to GenFin.ai - Your Intelligent Financial Health Assistant!**\n\nI\'m here to provide you with personalized financial guidance, but first I need to understand your financial situation.\n\n**📋 Required Information:**\n• Monthly income & expenses\n• Savings amount\n• Current debt (if any)\n• Emergency fund status\n• Investment preferences\n\n**⚡ Quick Start:**\n1. Click the **Profile** button in the navigation above\n2. Fill in your financial information\n3. Click "Analyze Financial Health"\n4. Save your profile\n5. Come back here for personalized guidance!\n\nYour financial data is stored securely and used only to provide you with better guidance. Let\'s get started on your financial journey! 🌟',
-          timestamp: new Date().toISOString()
-        }]);
+        setMessages(prev => [
+          prev[0],
+          {
+            role: 'system',
+            content: proactiveMessage,
+            type: 'text'
+          }
+        ]);
       }
-      
-      // Step 4: Load chat history from database
-      await loadChatHistory();
     };
 
-    initializeApp();
+    initializeProfile();
   }, []);
 
-  // Load chat history from database
-  const loadChatHistory = async () => {
-    try {
-      const response = await fetch('http://localhost:5000/api/chat/history');
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.messages && data.messages.length > 0) {
-          console.log('� Chat history loaded:', data.messages.length, 'messages');
-          setMessages(data.messages);
-        }
-      }
-    } catch (error) {
-      console.error('Error loading chat history:', error);
-    }
-  };
-
-  // Save message to database
-  const saveMessageToDatabase = async (role: 'user' | 'assistant', content: string) => {
-    try {
-      const response = await fetch('http://localhost:5000/api/chat/message', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role, content })
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          console.log('💬 Message saved to database:', data.message._id);
-          return data.message;
-        }
-      }
-    } catch (error) {
-      console.error('Error saving message to database:', error);
-    }
-    return null;
-  };
-
-  // Clear chat history
-  const clearChatHistory = async () => {
-    try {
-      const response = await fetch('http://localhost:5000/api/chat/history', {
-        method: 'DELETE'
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          console.log('� Chat history cleared:', data.deletedCount, 'messages');
-          
-          // Reset to welcome message
-          if (profile && financialMetrics) {
-            const readinessScore = financialMetrics.readinessScore;
-            let proactiveMessage = '';
-            
-            if (readinessScore >= 75) {
-              proactiveMessage = `Perfect! I can see you have a solid financial foundation! Your readiness score is ${readinessScore}/100. I'm now ready to provide you with comprehensive AI-powered financial guidance. Ask me anything about your finances!`;
-            } else if (readinessScore >= 50) {
-              proactiveMessage = `Great! I can see you're making good progress! Your readiness score is ${readinessScore}/100. I'm now ready to analyze your financial situation and provide personalized guidance. What would you like to explore?`;
-            } else {
-              proactiveMessage = `Welcome back! I can see you're in the early stages of your financial journey. Your readiness score is ${readinessScore}/100. Don't worry - I'm here to help you build a strong foundation. What would you like to work on first?`;
-            }
-            
-            setMessages([{
-              role: 'assistant',
-              content: proactiveMessage,
-              timestamp: new Date().toISOString()
-            }]);
-          } else {
-            setMessages([{
-              role: 'assistant',
-              content: '**Welcome to GenFin.ai - Your Intelligent Financial Health Assistant!**\n\nI\'m here to provide you with personalized financial guidance, but first I need to understand your financial situation.\n\n**📋 Required Information:**\n• Monthly income & expenses\n• Savings amount\n• Current debt (if any)\n• Emergency fund status\n• Investment preferences\n\n**⚡ Quick Start:**\n1. Click the **Profile** button in the navigation above\n2. Fill in your financial information\n3. Click "Analyze Financial Health"\n4. Save your profile\n5. Come back here for personalized guidance!\n\nYour financial data is stored securely and used only to provide you with better guidance. Let\'s get started on your financial journey! 🌟',
-              timestamp: new Date().toISOString()
-            }]);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error clearing chat history:', error);
-    }
-  };
-
   const generateProactiveSuggestions = (): string[] => {
-    if (!profile || !financialMetrics) return [];
+    if (!profile) return [];
     
     const suggestions = [];
-    const readinessScore = financialMetrics.readinessScore;
+    const readinessScore = calculateBasicReadinessScore(profile);
     
     if (readinessScore >= 75) {
       suggestions.push("Show me investment opportunities for my risk level");
@@ -361,7 +277,7 @@ export default function GenFinChatPage() {
         data: summary
       };
 
-      setMessages([...messages, summaryMessage]);
+      setMessages(prev => [...prev, summaryMessage]);
     } catch (error) {
       console.error('Summary generation error:', error);
     } finally {
@@ -400,7 +316,7 @@ export default function GenFinChatPage() {
         data: summary.guidedPath
       };
 
-      saveMessagesToStorage([...messages, pathMessage]);
+      setMessages(prev => [...prev, pathMessage]);
     } catch (error) {
       console.error('Guided path generation error:', error);
     } finally {
@@ -439,7 +355,7 @@ export default function GenFinChatPage() {
         data: summary.statistics
       };
 
-      saveMessagesToStorage([...messages, statsMessage]);
+      setMessages(prev => [...prev, statsMessage]);
     } catch (error) {
       console.error('Statistics generation error:', error);
     } finally {
@@ -450,46 +366,43 @@ export default function GenFinChatPage() {
   const sendMessage = async () => {
     if (!input.trim() || loading) return;
 
-    const userMessage = input.trim();
-    const userMessageLower = userMessage.toLowerCase();
-    
-    // Save user message to database immediately
-    await saveMessageToDatabase('user', userMessage);
-    
+    const userMessage = input.trim().toLowerCase();
     const nextMessages: ChatMessage[] = [
       ...messages,
-      { role: 'user', content: userMessage, timestamp: new Date().toISOString() }
+      { role: 'user', content: input.trim() }
     ];
     setMessages(nextMessages);
     setInput('');
     setLoading(true);
 
     // Handle special commands for financial analysis
-    if (userMessageLower.includes('summary') || userMessageLower.includes('analyze') || userMessageLower.includes('health')) {
+    if (userMessage.includes('summary') || userMessage.includes('analyze') || userMessage.includes('health')) {
       await generateFinancialSummaryMessage();
       return;
     }
     
-    if (userMessageLower.includes('path') || userMessageLower.includes('guide') || userMessageLower.includes('journey')) {
+    if (userMessage.includes('path') || userMessage.includes('guide') || userMessage.includes('journey')) {
       await generateGuidedPathMessage();
       return;
     }
     
-    if (userMessageLower.includes('statistics') || userMessageLower.includes('stats') || userMessageLower.includes('numbers')) {
+    if (userMessage.includes('statistics') || userMessage.includes('stats') || userMessage.includes('numbers')) {
       await generateStatisticsMessage();
       return;
     }
 
     try {
-      // Use current profile data
+      // Fetch the latest profile from database for each interaction
+      const profileData = await loadProfileForChat();
+      
       const payload = {
-        message: userMessage,
-        profile: profile ? {
-          income: profile.income,
-          expenses: profile.expenses,
-          savings: profile.savings,
-          debt: profile.debt,
-          emergencyFundMonths: profile.emergencyFundMonths
+        message: nextMessages[nextMessages.length - 1].content,
+        profile: profileData ? {
+          income: profileData.income,
+          expenses: profileData.expenses,
+          savings: profileData.savings,
+          debt: profileData.debt,
+          emergencyFundMonths: profileData.emergencyFundMonths
         } : undefined
       };
 
@@ -505,27 +418,19 @@ export default function GenFinChatPage() {
 
       const json = await res.json();
       const reply: string = json.reply || 'I could not generate a response right now.';
-      
-      // Save AI response to database
-      await saveMessageToDatabase('assistant', reply);
 
       setMessages([
         ...nextMessages,
-        { role: 'assistant', content: reply, timestamp: new Date().toISOString() }
+        { role: 'assistant', content: reply }
       ]);
     } catch (e) {
       console.error('GenFin.ai chat error', e);
-      const errorMessage = 'I could not reach the GenFin SLM backend. Please ensure the backend and Ollama are running and try again.';
-      
-      // Save error message to database
-      await saveMessageToDatabase('assistant', errorMessage);
-      
       setMessages([
         ...nextMessages,
         {
           role: 'assistant',
-          content: errorMessage,
-          timestamp: new Date().toISOString()
+          content:
+            'I could not reach the GenFin SLM backend. Please ensure the backend and Ollama are running and try again.'
         }
       ]);
     } finally {
@@ -656,70 +561,43 @@ export default function GenFinChatPage() {
       {/* Current Phase */}
       <div className="bg-gradient-to-r from-purple-500/20 to-blue-500/20 border border-purple-500/50 rounded-lg p-4">
         <div className="flex justify-between items-center mb-2">
-          <h4 className="font-semibold text-slate-100">Current Stage: {data?.currentStage || 'Getting Started'}</h4>
-          <span className="text-sm text-purple-300">{data?.timeline || '6-12 months'}</span>
+          <h4 className="font-semibold text-slate-100">Current Stage: {data?.guidedPath?.currentStage || 'Getting Started'}</h4>
+          <span className="text-sm text-purple-300">{data?.guidedPath?.timeline || '6-12 months'}</span>
         </div>
-        <div className="w-full bg-slate-700 rounded-full h-2">
-          <div 
-            className="bg-gradient-to-r from-purple-500 to-blue-500 h-2 rounded-full transition-all duration-500"
-            style={{ width: `${100}%` }}
-          ></div>
-        </div>
-        <p className="text-sm text-slate-300 mt-2">Next Steps</p>
-        <p className="text-xs text-slate-400 mt-1">Estimated Timeline: {data?.timeline || '6-12 months'}</p>
+        <p className="text-sm text-slate-300">Estimated Timeline: {data?.guidedPath?.timeline || '6-12 months'}</p>
       </div>
 
-      {/* Immediate Actions */}
+      {/* Priority Actions */}
       <div>
         <h4 className="font-semibold text-slate-100 mb-2 flex items-center gap-2">
           <CheckCircle size={16} className="text-emerald-400" />
-          Immediate Actions
+          Priority Actions
         </h4>
         <div className="space-y-2">
-          {(data?.priorityActions || []).map((action: string, i: number) => (
-            <div key={i} className="flex items-start gap-2 bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-2">
-              <CheckCircle className="text-emerald-400 mt-0.5" size={14} />
-              <span className="text-sm text-slate-200">{action}</span>
+          {(data?.guidedPath?.priorityActions || []).map((action: string, i: number) => (
+            <div key={i} className="flex items-start gap-2">
+              <ArrowRight size={14} className="text-emerald-400 mt-0.5 flex-shrink-0" />
+              <span className="text-sm text-slate-300">{action}</span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Milestones */}
-      {data.milestones && data.milestones.length > 0 && (
-        <div>
-          <h4 className="font-semibold text-slate-100 mb-2 flex items-center gap-2">
-            <TrendingUp size={16} className="text-cyan-400" />
-            Key Milestones
-          </h4>
-          <div className="space-y-2">
-            {data.milestones.map((milestone: any, i: number) => (
-              <div key={i} className="bg-slate-700/30 rounded-lg p-3">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-medium text-slate-100">{milestone.title}</span>
-                  <span className={`text-xs px-2 py-1 rounded ${
-                    milestone.priority === 'high' ? 'bg-red-500/20 text-red-300' :
-                    milestone.priority === 'medium' ? 'bg-yellow-500/20 text-yellow-300' :
-                    'bg-green-500/20 text-green-300'
-                  }`}>
-                    {milestone.priority}
-                  </span>
-                </div>
-                <div className="flex justify-between text-xs text-slate-400 mb-2">
-                  <span>Target: {milestone.target}</span>
-                  <span>Current: {milestone.current}</span>
-                </div>
-                <div className="w-full bg-slate-600 rounded-full h-1.5">
-                  <div 
-                    className={`${getHealthBgColor(milestone.progress)} h-1.5 rounded-full transition-all duration-500`}
-                    style={{ width: `${milestone.progress}%` }}
-                  ></div>
-                </div>
-              </div>
-            ))}
-          </div>
+      {/* Next Steps */}
+      <div>
+        <h4 className="font-semibold text-slate-100 mb-2 flex items-center gap-2">
+          <TargetIcon size={16} className="text-blue-400" />
+          Next Steps
+        </h4>
+        <div className="space-y-2">
+          {(data?.guidedPath?.nextSteps || []).map((step: string, i: number) => (
+            <div key={i} className="flex items-start gap-2">
+              <div className="w-2 h-2 bg-blue-400 rounded-full mt-1.5 flex-shrink-0"></div>
+              <span className="text-sm text-slate-300">{step}</span>
+            </div>
+          ))}
         </div>
-      )}
+      </div>
     </div>
   );
 
@@ -740,20 +618,20 @@ export default function GenFinChatPage() {
           <div className="space-y-2">
             <div className="flex justify-between">
               <span className="text-sm text-slate-400">Monthly Income</span>
-              <span className="text-sm font-medium text-slate-100">{formatCurrency(data.cashFlow.monthlyIncome)}</span>
+              <span className="text-sm font-medium text-slate-100">{formatCurrency(data?.statistics?.cashFlow?.monthlyIncome || 0)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-slate-400">Monthly Expenses</span>
-              <span className="text-sm font-medium text-slate-100">{formatCurrency(data.cashFlow.monthlyExpenses)}</span>
+              <span className="text-sm font-medium text-slate-100">{formatCurrency(data?.statistics?.cashFlow?.monthlyExpenses || 0)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-slate-400">Monthly Savings</span>
-              <span className="text-sm font-medium text-emerald-400">{formatCurrency(data.cashFlow.monthlySavings)}</span>
+              <span className="text-sm font-medium text-emerald-400">{formatCurrency(data?.statistics?.cashFlow?.monthlySavings || 0)}</span>
             </div>
             <div className="flex justify-between pt-2 border-t border-slate-600">
               <span className="text-sm text-slate-400">Net Cash Flow</span>
-              <span className={`text-sm font-medium ${data.cashFlow.netCashFlow >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                {formatCurrency(data.cashFlow.netCashFlow)}
+              <span className={`text-sm font-medium ${(data?.statistics?.cashFlow?.netCashFlow || 0) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                {formatCurrency(data?.statistics?.cashFlow?.netCashFlow || 0)}
               </span>
             </div>
           </div>
@@ -768,66 +646,48 @@ export default function GenFinChatPage() {
           <div className="space-y-2">
             <div className="flex justify-between">
               <span className="text-sm text-slate-400">Current Coverage</span>
-              <span className="text-sm font-medium text-slate-100">{data.emergencyFund.currentMonths} months</span>
+              <span className="text-sm font-medium text-slate-100">{data?.statistics?.emergencyFund?.currentMonths || 0} months</span>
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-slate-400">Target Coverage</span>
-              <span className="text-sm font-medium text-slate-100">{data.emergencyFund.targetMonths} months</span>
+              <span className="text-sm font-medium text-slate-100">{data?.statistics?.emergencyFund?.targetMonths || 6} months</span>
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-slate-400">Adequacy Score</span>
-              <span className={`text-sm font-medium ${getHealthColor(data.emergencyFund.adequacyScore)}`}>
-                {data.emergencyFund.adequacyScore.toFixed(0)}%
+              <span className={`text-sm font-medium ${getHealthColor(data?.statistics?.emergencyFund?.adequacyScore || 0)}`}>
+                {(data?.statistics?.emergencyFund?.adequacyScore || 0).toFixed(0)}%
               </span>
             </div>
             <div className="w-full bg-slate-600 rounded-full h-2 mt-2">
               <div 
-                className={`${getHealthBgColor(data.emergencyFund.adequacyScore)} h-2 rounded-full transition-all duration-500`}
-                style={{ width: `${data.emergencyFund.adequacyScore}%` }}
+                className={`${getHealthBgColor(data?.statistics?.emergencyFund?.adequacyScore || 0)} h-2 rounded-full transition-all duration-500`}
+                style={{ width: `${data?.statistics?.emergencyFund?.adequacyScore || 0}%` }}
               ></div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Investment Capacity */}
+      {/* Savings Performance */}
       <div className="bg-slate-700/50 rounded-lg p-4">
         <h4 className="font-semibold text-slate-100 mb-3 flex items-center gap-2">
-          <TrendingUp size={16} className="text-purple-400" />
-          Investment Readiness
+          <PiggyBank size={16} className="text-green-400" />
+          Savings Performance
         </h4>
-        <div className="grid md:grid-cols-3 gap-4">
+        <div className="grid md:grid-cols-2 gap-4">
           <div>
-            <span className="text-xs text-slate-400">Readiness Score</span>
-            <div className={`text-lg font-bold ${getHealthColor(data?.investmentReadiness?.readinessScore || 0)}`}>
-              {data?.investmentReadiness?.readinessScore || 0}/100
+            <span className="text-xs text-slate-400">Savings Rate</span>
+            <div className={`text-lg font-bold ${getHealthColor(data?.statistics?.cashFlow?.savingsRate || 0)}`}>
+              {(data?.statistics?.cashFlow?.savingsRate || 0).toFixed(1)}%
             </div>
           </div>
           <div>
-            <span className="text-xs text-slate-400">Can Invest</span>
-            <div className={`text-lg font-bold ${data?.investmentReadiness?.isReady ? 'text-emerald-400' : 'text-red-400'}`}>
-              {data?.investmentReadiness?.isReady ? 'Yes' : 'No'}
-            </div>
-          </div>
-          <div>
-            <span className="text-xs text-slate-400">Recommended Amount</span>
-            <div className="text-lg font-bold text-purple-400">
-              {formatCurrency(data?.investmentReadiness?.recommendation?.amount || 0)}
+            <span className="text-xs text-slate-400">Expense Ratio</span>
+            <div className={`text-lg font-bold ${getHealthColor(100 - (data?.statistics?.cashFlow?.expenseRatio || 0))}`}>
+              {(data?.statistics?.cashFlow?.expenseRatio || 0).toFixed(1)}%
             </div>
           </div>
         </div>
-        {data?.investmentReadiness?.recommendation?.products && data.investmentReadiness.recommendation.products.length > 0 && (
-          <div className="mt-3">
-            <span className="text-xs text-slate-400">Suggested Products</span>
-            <div className="flex flex-wrap gap-2 mt-1">
-              {data.investmentReadiness.recommendation.products.map((product: string, i: number) => (
-                <span key={i} className="text-xs bg-purple-500/20 text-purple-300 px-2 py-1 rounded">
-                  {product}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
@@ -897,14 +757,6 @@ export default function GenFinChatPage() {
               >
                 <TrendingUp size={14} />
                 Statistics
-              </button>
-              <button
-                onClick={clearChatHistory}
-                disabled={loading}
-                className="px-3 py-1.5 bg-gradient-to-r from-red-500 to-red-600 text-white text-sm rounded-lg hover:from-red-600 hover:to-red-700 transition-all disabled:opacity-50 flex items-center gap-2"
-              >
-                <Trash2 size={14} />
-                Clear Chat
               </button>
             </div>
             

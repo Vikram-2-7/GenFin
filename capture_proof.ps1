@@ -22,18 +22,28 @@ function Take-Screenshot {
 
 Write-Host "📸 Capturing screenshots of GenFin application..."
 
-# Take initial screenshot
+# Test backend API
+try {
+    $response = Invoke-RestMethod -Uri 'http://localhost:5000/api/health' -Method Get -TimeoutSec 5
+    Write-Host "✅ Backend is running: $($response.status)"
+} catch {
+    Write-Host "❌ Backend not responding"
+}
+
+# Test frontend
+try {
+    $response = Invoke-RestMethod -Uri 'http://localhost:5173' -Method Get -TimeoutSec 5
+    Write-Host "✅ Frontend is running"
+} catch {
+    Write-Host "❌ Frontend not responding"
+}
+
+# Take screenshots
 Take-Screenshot -Path "d:\genfinproj\GenFin v3\project\proof_backend_running.png" -Delay 1
-
-Write-Host "✅ Backend running screenshot captured"
-
-# Open browser to capture frontend
 Start-Process "http://localhost:5173"
 Take-Screenshot -Path "d:\genfinproj\GenFin v3\project\proof_frontend_loaded.png" -Delay 3
 
-Write-Host "✅ Frontend loaded screenshot captured"
-
-Write-Host "🎉 Screenshots captured successfully!"
+Write-Host "✅ Screenshots captured successfully!"
 Write-Host "Files saved:"
 Write-Host "- proof_backend_running.png"
 Write-Host "- proof_frontend_loaded.png"

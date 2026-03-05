@@ -6,8 +6,6 @@ require("dotenv").config();
 const profileRoutes = require("./routes/profileRoutes");
 const slmRoutes = require("./routes/slmRoutes");
 const optimizedSLMRoutes = require("./routes/optimizedSLMRoutes");
-const chatRoutes = require("./routes/chatRoutes");
-const testRoutes = require("./routes/testRoutes");
 
 const app = express();
 
@@ -21,8 +19,6 @@ mongoose.connect(process.env.MONGO_URI)
 app.use("/api/profile", profileRoutes);
 app.use("/api/slm", slmRoutes);
 app.use("/api/slm-fast", optimizedSLMRoutes);
-app.use("/api/chat", chatRoutes);
-app.use("/api/test", testRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
@@ -46,8 +42,4 @@ app.listen(5000, () => {
   console.log("   GET /api/slm-fast/performance-stats");
   console.log("   GET /api/slm-fast/cache-details\n");
   console.log("💡 Health Check: GET /api/health\n");
-  console.log("💬 Chat API:");
-  console.log("   GET /api/chat/history");
-  console.log("   POST /api/chat/message");
-  console.log("   DELETE /api/chat/history\n");
 });
