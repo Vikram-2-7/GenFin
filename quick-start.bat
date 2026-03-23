@@ -14,6 +14,13 @@ start cmd /k "cd /d D:\genfinproj\GenFin v3\project\genfin-backend && npx nodemo
 timeout /t 3
 
 echo ================================
+echo Starting Ollama AI...
+echo ================================
+start cmd /k "ollama serve"
+
+timeout /t 5
+
+echo ================================
 echo Starting Frontend...
 echo ================================
 start cmd /k "cd /d D:\genfinproj\GenFin v3\project && npm run dev"
@@ -22,5 +29,5 @@ echo ================================
 echo GenFin System Started
 echo ================================
 
-timeout /t 5
+timeout /t 8
 start http://localhost:5173
