@@ -1,0 +1,93 @@
+import { useState } from 'react';
+import HomePage from './pages/HomePage';
+import InvestmentsPage from './pages/InvestmentsPage';
+import SchemesPage from './pages/SchemesPage';
+import EducationPage from './pages/EducationPage';
+import ProfilePage from './pages/ProfilePage';
+import SchemeDetailPage from './pages/SchemeDetailPage';
+import Navigation from './components/Navigation';
+import LiveRatesTicker from './components/LiveRatesTicker';
+import BudgetOptimizationTool from './components/BudgetOptimizationTool';
+import SLMAnalysisContainer from './components/SLMAnalysisContainer';
+import FinancialGoalsDashboard from './components/FinancialGoalsDashboard';
+import GroqSetupValidator from './components/GroqSetupValidator';
+import SLMPerformanceBenchmark from './components/SLMPerformanceBenchmark';
+import GenFinChatPage from './pages/GenFinChatPage';
+
+type Page =
+  | 'home'
+  | 'investments'
+  | 'schemes'
+  | 'education'
+  | 'profile'
+  | 'scheme-detail'
+  | 'budget-analysis'
+  | 'slm-analysis'
+  | 'goals'
+  | 'tech-setup'
+  | 'performance-test'
+  | 'genfin-ai';
+
+interface AppState {
+  page: Page;
+  selectedSchemeId?: string;
+}
+
+function App() {
+  const [state, setState] = useState<AppState>({ page: 'home' });
+
+  const navigate = (page: Page, selectedSchemeId?: string) => {
+    setState({ page, selectedSchemeId });
+  };
+
+  const renderPage = () => {
+    switch (state.page) {
+      case 'home':
+        return <HomePage onNavigate={(p) => navigate(p)} />;
+      case 'investments':
+        return <InvestmentsPage />;
+      case 'schemes':
+        return <SchemesPage onSchemeDetail={(id) => navigate('scheme-detail', id)} />;
+      case 'education':
+        return <EducationPage />;
+      case 'profile':
+        return <ProfilePage />;
+      case 'scheme-detail':
+        return (
+          <SchemeDetailPage
+            schemeId={state.selectedSchemeId || ''}
+            onBack={() => navigate('schemes')}
+          />
+        );
+      case 'budget-analysis':
+        return <BudgetOptimizationTool income={0} expenses={{}} />;
+      case 'slm-analysis':
+        return <SLMAnalysisContainer />;
+      case 'goals':
+        return <FinancialGoalsDashboard />;
+      case 'tech-setup':
+        return <GroqSetupValidator />;
+      case 'performance-test':
+        return <SLMPerformanceBenchmark />;
+      case 'genfin-ai':
+        return <GenFinChatPage />;
+      default:
+        return <HomePage onNavigate={(p) => navigate(p)} />;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <LiveRatesTicker />
+      {state.page !== 'home' && state.page !== 'genfin-ai' && (
+        <Navigation
+          currentPage={state.page as 'investments' | 'schemes' | 'education' | 'profile'}
+          onNavigate={(p) => navigate(p)}
+        />
+      )}
+      {renderPage()}
+    </div>
+  );
+}
+
+export default App;
